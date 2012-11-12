@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <meta charset="UTF-8">
+  <head><title>Chat Client</title></head>
+  <body>
+    <input name="name" placeholder="Name" id="name"></input><br>
+    <textarea rows="3" cols="30" id="text"></textarea><br>
+    <input type="submit" name="submit" id="send" value="send"></input>
+    <p id="talk"></p>
+    <script>
+      var socket = new WebSocket("ws://localhost:8080/chat");
+      socket.onopen = function() {
+        document.getElementById("send").addEventListener("click", function() {
+          var name = document.getElementById("name").value;
+          var text = document.getElementById("text").value;
+          var msg = JSON.stringify({ name: name, text: text});
+          socket.send(msg);
+        });
+      }
+      socket.onmessage = function(msg) {
+        var msg = JSON.parse(msg.data);
+        var talks = document.getElementById("talk");
+        talks.innerHTML = "<hr>From: <strong>" + msg.name + "</strong><br>"
+                        + msg.text
+                        + talks.innerHTML;
+      }
+    </script>
+  </body>
+</html>

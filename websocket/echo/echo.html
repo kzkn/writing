@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <meta charset="UTF-8">
+  <head><title>Echo Client</title></head>
+  <body>
+    <textarea rows="3" cols="30" id="text"></textarea><br>
+    <input type="submit" name="submit" id="send" value="send"></input>
+    <p id="response"></p>
+    <script>
+      var socket = new WebSocket("ws://localhost:8080/echo");
+      socket.onopen = function() {
+        document.getElementById("send").addEventListener("click", function() {
+          var text = document.getElementById("text").value;
+          socket.send(text);
+        });
+      }
+      socket.onmessage = function(msg) {
+        var responses = document.getElementById("response");
+        responses.innerHTML = responses.innerHTML + "<br>" + msg.data;
+      }
+    </script>
+  </body>
+</html>
