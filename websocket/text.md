@@ -220,7 +220,7 @@ Tornado では `WebSocketHandler` クラスを継承することで、WebSocket 
       document.getElementById("send").addEventListener("click", function() {
         var name = document.getElementById("name").value;
         var text = document.getElementById("text").value;
-        var msg = JSON.stringify({ name: name, text: text});
+        var msg = JSON.stringify({ name: name, text: text });
         socket.send(msg);
       });
     }
