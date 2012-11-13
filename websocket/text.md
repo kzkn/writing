@@ -717,7 +717,13 @@ TODO: code
 
 クライアントが行う操作は JSON で表現することにします。たとえば、「座標(0, 0)から座標 (20, 20) に線を引く」という操作は、以下のような JSON で表現することにします:
 
-TODO: code
+    {
+      "tool": "line",
+      "x": 0,
+      "y": 0,
+      "dx": 20,
+      "dy": 20
+    }
 
 メッセージを受信したクライアントは、メッセージの内容を解析して、自身のキャンバスに反映します。
 
@@ -772,27 +778,20 @@ TODO: code
         this.obj.draw(ctx);
     }
 
-    Tool.prototype.makeOperation = function() {
-      if (this.obj) {
-        var obj = this.obj;
-        return new Operation(obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
-      } else {
-        throw "no object";
-      }
-    }
-
 次に、ユーザ操作と描画対象図形の橋渡しを請け負うクラスの実装です。今回は線だけのサポートですが、図形のバリエーションが増えれば、それに応じてこのクラスのバリエーションも増えていくイメージです (単純な図形ならほとんどこれで十分そうですが)。
 
     Tool.prototype.makeOperation = function() {
       if (this.obj) {
         var obj = this.obj;
-        return new Operation(obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
+        return new Operation(
+            "line", obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
       } else {
         throw "no object";
       }
     }
 
-    var Operation = function(x, y, dx, dy) {
+    var Operation = function(toolName, x, y, dx, dy) {
+      this.toolName = toolName;
       this.x = x;
       this.y = y;
       this.dx = dx;
@@ -808,6 +807,7 @@ TODO: code
 
     Operation.prototype.send = function(socket) {
       var msg = JSON.stringify({
+        tool: this.toolName,
         x: this.x,
         y: this.y,
         dx: this.dx,
@@ -819,6 +819,7 @@ TODO: code
 ユーザの操作を表現するクラスです。このオブジェクトの内容が、他ユーザに向けて送信されます。Tool から生成するようにしておきましょう。
 
     var jsonToOperation = function(json) {
+      return new Operation(json.tool, json.x, json.y, json.dx, json.dy);
       return new Operation(json.x, json.y, json.dx, json.dy);
     }
 
@@ -894,13 +895,15 @@ TODO: code
           Tool.prototype.makeOperation = function() {
             if (this.obj) {
               var obj = this.obj;
-              return new Operation(obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
+              return new Operation(
+                  "line", obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
             } else {
               throw "no object";
             }
           }
 
-          var Operation = function(x, y, dx, dy) {
+          var Operation = function(toolName, x, y, dx, dy) {
+            this.toolName = toolName;
             this.x = x;
             this.y = y;
             this.dx = dx;
@@ -908,7 +911,7 @@ TODO: code
           }
 
           var jsonToOperation = function(json) {
-            return new Operation(json.x, json.y, json.dx, json.dy);
+            return new Operation(json.tool, json.x, json.y, json.dx, json.dy);
           }
 
           Operation.prototype.perform = function(ctx) {
@@ -920,6 +923,7 @@ TODO: code
 
           Operation.prototype.send = function(socket) {
             var msg = JSON.stringify({
+              tool: this.toolName,
               x: this.x,
               y: this.y,
               dx: this.dx,

@@ -45,13 +45,15 @@
       Tool.prototype.makeOperation = function() {
         if (this.obj) {
           var obj = this.obj;
-          return new Operation(obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
+          return new Operation(
+              "line", obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
         } else {
           throw "no object";
         }
       }
 
-      var Operation = function(x, y, dx, dy) {
+      var Operation = function(toolName, x, y, dx, dy) {
+        this.toolName = toolName;
         this.x = x;
         this.y = y;
         this.dx = dx;
@@ -59,7 +61,7 @@
       }
 
       var jsonToOperation = function(json) {
-        return new Operation(json.x, json.y, json.dx, json.dy);
+        return new Operation(json.tool, json.x, json.y, json.dx, json.dy);
       }
 
       Operation.prototype.perform = function(ctx) {
@@ -71,6 +73,7 @@
 
       Operation.prototype.send = function(socket) {
         var msg = JSON.stringify({
+          tool: this.toolName,
           x: this.x,
           y: this.y,
           dx: this.dx,
