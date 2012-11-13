@@ -85,26 +85,56 @@ TODO
 
 ### クライアント
 
-まず、WebSocket のインスタンスを構築します。
+まず、`WebSocket` のインスタンスを構築します。
 
-TODO: code
+    var socket = new WebSocket("ws://localhost:8080/echo");
 
-WebSocket のコンストラクタには接続先サーバのURLを指定します。スキーマには「ws://」か「wss://」を指定しなければなりません。
-JavaScript の WebSocket API では、WebSocket を new すると、サーバへの接続が開始されます（非同期）。WebSocket を new した後は、コールバックを設定します。
+`WebSocket` のコンストラクタには接続先サーバのURLを指定します。スキーマには「ws://」か「wss://」を指定しなければなりません。
+JavaScript の WebSocket API では、`WebSocket` を new すると、サーバへの接続が開始されます（非同期）。`WebSocket` を new した後は、コールバックを設定します。
 
-TODO: code
+    socket.onopen = function() {
+      document.getElementById("send").addEventListener("click", function() {
+        var text = document.getElementById("text").value;
+        socket.send(text);
+      });
+    }
 
-onopen は WebSocket の接続が確立されたタイミングで呼び出されるコールバックです。接続が確立されたタイミングで、ボタンにイベントリスナを登録します。イベントリスナの内部では、テキストフィールドに入力されたテキストを WebSocket#send を使って送信しています。
+`onopen` は `WebSocket` の接続が確立されたタイミングで呼び出されるコールバックです。接続が確立されたタイミングで、ボタンにイベントリスナを登録します。イベントリスナの内部では、テキストフィールドに入力されたテキストを `WebSocket#send` を使って送信しています。
 
 最後に、サーバからのエコーを受け取るよう、コールバックを設定します。
 
-TODO: code
+    socket.onmessage = function(msg) {
+      var responses = document.getElementById("response");
+      responses.innerHTML = responses.innerHTML + "<br>" + msg.data;
+    }
 
-onmessage はサーバからのメッセージを受信したタイミングで呼び出されるコールバックです。引数にサーバからのメッセージを受け、メッセージの data プロパティにその本文を含みます。
+`onmessage` はサーバからのメッセージを受信したタイミングで呼び出されるコールバックです。引数にサーバからのメッセージを受け、メッセージの `data` プロパティにその本文を含みます。
 
 以下、クライアントのコード全体です。
 
-TODO: code
+    <!DOCTYPE html>
+    <html>
+      <meta charset="UTF-8">
+      <head><title>Echo Client</title></head>
+      <body>
+        <textarea rows="3" cols="30" id="text"></textarea><br>
+        <input type="submit" name="submit" id="send" value="send"></input>
+        <p id="response"></p>
+        <script>
+          var socket = new WebSocket("ws://localhost:8080/echo");
+          socket.onopen = function() {
+            document.getElementById("send").addEventListener("click", function() {
+              var text = document.getElementById("text").value;
+              socket.send(text);
+            });
+          }
+          socket.onmessage = function(msg) {
+            var responses = document.getElementById("response");
+            responses.innerHTML = responses.innerHTML + "<br>" + msg.data;
+          }
+        </script>
+      </body>
+    </html>
 
 ### サーバ
 
@@ -112,15 +142,48 @@ TODO: code
 
 ここではエコーサーバを実装するので、クライアントが送信したメッセージを、そっくりそのままクライアントに返すような実装になります。
 
-TODO: code
+    class EchoHandler(WebSocketHandler):
+        def on_message(self, message):
+            self.write_message(u"You said: " + message)
+
+
+    app = Application([
+        (r"/", MainHandler),
+        (r"/echo", EchoHandler)
+        ])
 
 Tornado では `WebSocketHandler` クラスを継承することで、WebSocket を処理するハンドラを定義します。これを "/echo" にバインドしています。
 
-on_message メソッドは、クライアントからのメッセージを受信したタイミングで呼び出されるメソッドです。受け取ったメッセージをそのまま write_message メソッドに渡すことで、クライアントにメッセージを返しています。
+`on_message` メソッドは、クライアントからのメッセージを受信したタイミングで呼び出されるメソッドです。受け取ったメッセージをそのまま `write_message` メソッドに渡すことで、クライアントにメッセージを返しています。
 
 以下、サーバのコード全体です。
 
-TODO: code
+    #!/usr/bin/python
+    # -*- coding: utf-8 -*-
+
+    from tornado.ioloop import IOLoop
+    from tornado.web import Application, RequestHandler
+    from tornado.websocket import WebSocketHandler
+
+
+    class MainHandler(RequestHandler):
+        def get(self):
+            self.render("echo.html")
+
+
+    class EchoHandler(WebSocketHandler):
+        def on_message(self, message):
+            self.write_message(u"You said: " + message)
+
+
+    app = Application([
+        (r"/", MainHandler),
+        (r"/echo", EchoHandler)
+        ])
+
+    if __name__ == "__main__":
+        app.listen(8080)
+        IOLoop.instance().start()
 
 ## チャット
 
