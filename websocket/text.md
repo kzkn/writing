@@ -729,44 +729,283 @@ TODO: code
 
 まずは絵を描画するための領域であるキャンバスを用意します。
 
-TODO: code
+    <canvas id="canvas" width="640" height="480" style="border: 1px solid #000;"></canvas>
 
-canvas 要素は HTML5 で新たに追加された要素です。Java でいうところの java.awt.Graphics を使ったような描画処理や、画像の入出力、video 要素で再生中の映像をキャプチャするといった機能を備えます。
+`canvas` 要素は HTML5 で新たに追加された要素です。Java でいうところの `java.awt.Graphics` を使ったような描画処理や、画像の入出力、`video` 要素で再生中の映像をキャプチャするといった機能を備えます。
 
-TODO: code
+    var DrawObject = function(x, y) {
+      this.x = x;
+      this.y = y;
+      this.w = 0;
+      this.h = 0;
+    }
 
-画面に描画される図形（今回は線のみ）の実装です。起点となる座標と、幅と高さを持ちます。自身をキャンバス上に描画する、draw メソッドを持ちます。
+    DrawObject.prototype.expand = function(x, y) {
+      this.w = x - this.x;
+      this.h = y - this.y;
+    }
 
-TODO: code
+    DrawObject.prototype.draw = function(ctx) {
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(this.x + this.w, this.y + this.h);
+      ctx.stroke();
+    }
 
-次に、ユーザ操作と描画対象図形の橋渡しを請け負うクラスの実装です。今回は線だけのサポートですが、図形のバリエーションが増えれば、それに応じてこのクラスのバリエーションも増えていくという想定です。
+画面に描画される図形（今回は線のみ）の実装です。起点となる座標と、幅と高さを持ちます。サイズを拡張する `expand` メソッドと、自身をキャンバス上に描画する `draw` メソッドを持ちます。
 
-TODO: code
+    var Tool = function() {
+      this.obj = null;
+    }
 
-ユーザの操作を表現するクラスです。このオブジェクトの内容が、他ユーザに向けて送信されます。
+    Tool.prototype.begin = function(x, y) {
+      this.obj = new DrawObject(x, y);
+    }
 
-TODO: code
+    Tool.prototype.end = function(x, y) {
+      if (this.obj)
+        this.obj.expand(x, y);
+    }
+
+    Tool.prototype.draw = function(ctx) {
+      if (this.obj)
+        this.obj.draw(ctx);
+    }
+
+    Tool.prototype.makeOperation = function() {
+      if (this.obj) {
+        var obj = this.obj;
+        return new Operation(obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
+      } else {
+        throw "no object";
+      }
+    }
+
+次に、ユーザ操作と描画対象図形の橋渡しを請け負うクラスの実装です。今回は線だけのサポートですが、図形のバリエーションが増えれば、それに応じてこのクラスのバリエーションも増えていくイメージです (単純な図形ならほとんどこれで十分そうですが)。
+
+    Tool.prototype.makeOperation = function() {
+      if (this.obj) {
+        var obj = this.obj;
+        return new Operation(obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
+      } else {
+        throw "no object";
+      }
+    }
+
+    var Operation = function(x, y, dx, dy) {
+      this.x = x;
+      this.y = y;
+      this.dx = dx;
+      this.dy = dy;
+    }
+
+    Operation.prototype.perform = function(ctx) {
+      var tool = new Tool();
+      tool.begin(this.x, this.y);
+      tool.end(this.dx, this.dy);
+      tool.draw(ctx);
+    }
+
+    Operation.prototype.send = function(socket) {
+      var msg = JSON.stringify({
+        x: this.x,
+        y: this.y,
+        dx: this.dx,
+        dy: this.dy
+      });
+      socket.send(msg);
+    }
+
+ユーザの操作を表現するクラスです。このオブジェクトの内容が、他ユーザに向けて送信されます。Tool から生成するようにしておきましょう。
+
+    var jsonToOperation = function(json) {
+      return new Operation(json.x, json.y, json.dx, json.dy);
+    }
 
 逆に他ユーザが行った操作も、このクラスで表現します。
 
-TODO: code
+    var mouseDown = function(e) {
+      currentTool.begin(e.x, e.y);
+    }
 
-マウス操作を行った結果を反映する処理の実装です。
-マウスイベントを Operation でラップし、マウスイベントの内容と、現在選択中の Tool を用いて画面を更新します。
+    var mouseUp = function(e) {
+      currentTool.end(e.x, e.y);
+      currentTool.draw(ctx);
 
-TODO: code
+      var ope = currentTool.makeOperation();
+      ope.send(socket);
+    }
 
-他ユーザが行った操作を反映する処理の実装です。
-WebSocket で受けたメッセージを JSON 化し、その内容に基づいて画面を更新します。
+マウス操作を行った結果を反映する処理の実装です。マウスイベントを監視し、適宜 `Tool` に処理を移譲します。マウスアップ時には `Operation` を生成し、操作内容を他ユーザへの送信します。
+
+    socket.onmessage = function(msg) {
+      var msg = JSON.parse(msg.data);
+      jsonToOperation(msg).perform(ctx);
+    }
+
+他ユーザが行った操作を反映する処理の実装です。`WebSocket` で受けたメッセージを JSON 化し、その内容に基づいて画面を更新します。
+
 以上でクライアントの主要部分を実装しました。以下、クライアントのコード全体です:
 
-TODO: code
+    <!DOCTYPE html>
+    <html>
+      <meta charset="UTF-8">
+      <head><title>Drawtool Client</title></head>
+      <body>
+        <canvas id="canvas" width="640" height="480" style="border: 1px solid #000;"></canvas>
+        <script>
+          var DrawObject = function(x, y) {
+            this.x = x;
+            this.y = y;
+            this.w = 0;
+            this.h = 0;
+          }
+
+          DrawObject.prototype.expand = function(x, y) {
+            this.w = x - this.x;
+            this.h = y - this.y;
+          }
+
+          DrawObject.prototype.draw = function(ctx) {
+            ctx.beginPath();
+            ctx.moveTo(this.x, this.y);
+            ctx.lineTo(this.x + this.w, this.y + this.h);
+            ctx.stroke();
+          }
+
+          var Tool = function() {
+            this.obj = null;
+          }
+
+          Tool.prototype.begin = function(x, y) {
+            this.obj = new DrawObject(x, y);
+          }
+
+          Tool.prototype.end = function(x, y) {
+            if (this.obj)
+              this.obj.expand(x, y);
+          }
+
+          Tool.prototype.draw = function(ctx) {
+            if (this.obj)
+              this.obj.draw(ctx);
+          }
+
+          Tool.prototype.makeOperation = function() {
+            if (this.obj) {
+              var obj = this.obj;
+              return new Operation(obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
+            } else {
+              throw "no object";
+            }
+          }
+
+          var Operation = function(x, y, dx, dy) {
+            this.x = x;
+            this.y = y;
+            this.dx = dx;
+            this.dy = dy;
+          }
+
+          var jsonToOperation = function(json) {
+            return new Operation(json.x, json.y, json.dx, json.dy);
+          }
+
+          Operation.prototype.perform = function(ctx) {
+            var tool = new Tool();
+            tool.begin(this.x, this.y);
+            tool.end(this.dx, this.dy);
+            tool.draw(ctx);
+          }
+
+          Operation.prototype.send = function(socket) {
+            var msg = JSON.stringify({
+              x: this.x,
+              y: this.y,
+              dx: this.dx,
+              dy: this.dy
+            });
+            socket.send(msg);
+          }
+
+          var socket = new WebSocket("ws://localhost:8080/drawtool");
+          var canvas = document.getElementById("canvas");
+          var ctx = canvas.getContext("2d");
+          var currentTool = new Tool();
+
+          var mouseDown = function(e) {
+            currentTool.begin(e.x, e.y);
+          }
+
+          var mouseUp = function(e) {
+            currentTool.end(e.x, e.y);
+            currentTool.draw(ctx);
+
+            var ope = currentTool.makeOperation();
+            ope.send(socket);
+          }
+
+          socket.onopen = function() {
+            canvas.onmousedown = mouseDown;
+            canvas.onmouseup = mouseUp;
+          }
+
+          socket.onmessage = function(msg) {
+            var msg = JSON.parse(msg.data);
+            jsonToOperation(msg).perform(ctx);
+          }
+        </script>
+      </body>
+    </html>
 
 ## サーバ
 
 サーバの実装は、冒頭で述べた通り、チャットサーバとほぼ同じ実装になります。唯一、送信元のクライアントにはメッセージを配信しないという点だけが異なります。
 
-TODO: code
+    #!/usr/bin/python
+    # -*- coding: utf-8 -*-
+
+    from tornado.ioloop import IOLoop
+    from tornado.web import Application, RequestHandler
+    from tornado.websocket import WebSocketHandler
+
+
+    class MainHandler(RequestHandler):
+        def get(self):
+            self.render("drawtool.html")
+
+
+    connections = []
+
+
+    class DrawtoolHandler(WebSocketHandler):
+        def open(self):
+            if self not in connections:
+                connections.append(self)
+
+        def on_message(self, msg):
+            for conn in connections:
+                if self == conn:
+                    continue
+
+                try:
+                    conn.write_message(msg)
+                except:
+                    connections.remove(conn)
+
+        def on_close(self):
+            if self in connections:
+                connections.remove(self)
+
+
+    app = Application([
+        (r"/", MainHandler),
+        (r"/drawtool", DrawtoolHandler)
+        ])
+
+    if __name__ == "__main__":
+        app.listen(8080)
+        IOLoop.instance().start()
 
 # 参考文献
 

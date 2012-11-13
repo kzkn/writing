@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <meta charset="UTF-8">
+  <head><title>Drawtool Client</title></head>
+  <body>
+    <canvas id="canvas" width="640" height="480" style="border: 1px solid #000;"></canvas>
+    <script>
+      var DrawObject = function(x, y) {
+        this.x = x;
+        this.y = y;
+        this.w = 0;
+        this.h = 0;
+      }
+
+      DrawObject.prototype.expand = function(x, y) {
+        this.w = x - this.x;
+        this.h = y - this.y;
+      }
+
+      DrawObject.prototype.draw = function(ctx) {
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x + this.w, this.y + this.h);
+        ctx.stroke();
+      }
+
+      var Tool = function() {
+        this.obj = null;
+      }
+
+      Tool.prototype.begin = function(x, y) {
+        this.obj = new DrawObject(x, y);
+      }
+
+      Tool.prototype.end = function(x, y) {
+        if (this.obj)
+          this.obj.expand(x, y);
+      }
+
+      Tool.prototype.draw = function(ctx) {
+        if (this.obj)
+          this.obj.draw(ctx);
+      }
+
+      Tool.prototype.makeOperation = function() {
+        if (this.obj) {
+          var obj = this.obj;
+          return new Operation(obj.x, obj.y, obj.x + obj.w, obj.y + obj.h);
+        } else {
+          throw "no object";
+        }
+      }
+
+      var Operation = function(x, y, dx, dy) {
+        this.x = x;
+        this.y = y;
+        this.dx = dx;
+        this.dy = dy;
+      }
+
+      var jsonToOperation = function(json) {
+        return new Operation(json.x, json.y, json.dx, json.dy);
+      }
+
+      Operation.prototype.perform = function(ctx) {
+        var tool = new Tool();
+        tool.begin(this.x, this.y);
+        tool.end(this.dx, this.dy);
+        tool.draw(ctx);
+      }
+
+      Operation.prototype.send = function(socket) {
+        var msg = JSON.stringify({
+          x: this.x,
+          y: this.y,
+          dx: this.dx,
+          dy: this.dy
+        });
+        socket.send(msg);
+      }
+
+      var socket = new WebSocket("ws://localhost:8080/drawtool");
+      var canvas = document.getElementById("canvas");
+      var ctx = canvas.getContext("2d");
+      var currentTool = new Tool();
+
+      var mouseDown = function(e) {
+        currentTool.begin(e.x, e.y);
+      }
+
+      var mouseUp = function(e) {
+        currentTool.end(e.x, e.y);
+        currentTool.draw(ctx);
+
+        var ope = currentTool.makeOperation();
+        ope.send(socket);
+      }
+
+      socket.onopen = function() {
+        canvas.onmousedown = mouseDown;
+        canvas.onmouseup = mouseUp;
+      }
+
+      socket.onmessage = function(msg) {
+        var msg = JSON.parse(msg.data);
+        jsonToOperation(msg).perform(ctx);
+      }
+    </script>
+  </body>
+</html>
