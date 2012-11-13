@@ -210,47 +210,138 @@ Tornado では `WebSocketHandler` クラスを継承することで、WebSocket 
 
 ### クライアント
 
-まずは WebSocket を構築します。
+まずは `WebSocket` を構築します。
 
-TODO: code
+    var socket = new WebSocket("ws://localhost:8080/chat");
 
-次に onopen コールバックを設定します。
+次に `onopen` コールバックを設定します。
 
-TODO: code
+    socket.onopen = function() {
+      document.getElementById("send").addEventListener("click", function() {
+        var name = document.getElementById("name").value;
+        var text = document.getElementById("text").value;
+        var msg = JSON.stringify({ name: name, text: text});
+        socket.send(msg);
+      });
+    }
 
 エコークライアントと同じように、接続が確立されたタイミングでボタンにイベントリスナを登録します。イベントリスナでは、名前と本文のテキストフィールドに入力された値を、JSON 化して `WebSocket#send` しています。
 
-最後にサーバから送られてくるメッセージ（すなわち他のクライアントが send した JSON）を受け取るよう、onmessage コールバックを設定します。
+最後にサーバから送られてくるメッセージ（すなわち他のクライアントが `send` した JSON）を受け取るよう、`onmessage` コールバックを設定します。
 
-TODO: code
+    socket.onmessage = function(msg) {
+      var msg = JSON.parse(msg.data);
+      var talks = document.getElementById("talk");
+      talks.innerHTML = "<hr>From: <strong>" + msg.name + "</strong><br>"
+                      + msg.text
+                      + talks.innerHTML;
+    }
 
-受け取ったメッセージを JSON として parse し、名前と本文を取り出します。それを HTML 化して画面に表示しています。
+受け取ったメッセージを JSON として `parse` し、名前と本文を取り出します。それを HTML 化して画面に表示しています。
 
 構造化データを扱うときは、JavaScript との親和性を考えると、JSON を使うのが何かと便利です。
 
 以下、クライアントのコード全体です。
 
-TODO: code
+    <!DOCTYPE html>
+    <html>
+      <meta charset="UTF-8">
+      <head><title>Chat Client</title></head>
+      <body>
+        <input name="name" placeholder="Name" id="name"></input><br>
+        <textarea rows="3" cols="30" id="text"></textarea><br>
+        <input type="submit" name="submit" id="send" value="send"></input>
+        <p id="talk"></p>
+        <script>
+          var socket = new WebSocket("ws://localhost:8080/chat");
+          socket.onopen = function() {
+            document.getElementById("send").addEventListener("click", function() {
+              var name = document.getElementById("name").value;
+              var text = document.getElementById("text").value;
+              var msg = JSON.stringify({ name: name, text: text});
+              socket.send(msg);
+            });
+          }
+          socket.onmessage = function(msg) {
+            var msg = JSON.parse(msg.data);
+            var talks = document.getElementById("talk");
+            talks.innerHTML = "<hr>From: <strong>" + msg.name + "</strong><br>"
+                            + msg.text
+                            + talks.innerHTML;
+          }
+        </script>
+      </body>
+    </html>
 
 ### サーバ
 
 チャットサーバでは、あるクライアントの発言をその他のクライアントに対して配信しなければならないので、WebSocket の接続をコレクションしておく必要があります。まず、クライアントからの接続を検出したタイミングでこれを行います。
 
-TODO: code
+    class ChatHandler(WebSocketHandler):
+        def open(self):
+            if self not in connections:
+                connections.append(self)
 
 クライアントから接続が閉じられたときには、コレクションから接続を削除します。
 
-TODO: code
+        def on_close(self):
+            if self in connections:
+               connections.remove(self)
 
 最後に、クライアントから受信したメッセージを、全クライアントに配信します。
 
-TODO: code
+        def on_message(self, msg):
+            for conn in connections:
+                try:
+                    conn.write_message(msg)
+                except:
+                    connections.remove(conn)
 
 メッセージの送信に失敗したクライアントは、切断されたものとしてコレクションから接続を削除します。
 
 以下、サーバのコード全体です。
 
-TODO: code
+    #!/usr/bin/python
+    # -*- coding: utf-8 -*-
+
+    from tornado.ioloop import IOLoop
+    from tornado.web import Application, RequestHandler
+    from tornado.websocket import WebSocketHandler
+
+
+    class MainHandler(RequestHandler):
+        def get(self):
+            self.render("chat.html")
+
+
+    connections = []
+
+
+    class ChatHandler(WebSocketHandler):
+        def open(self):
+            if self not in connections:
+                connections.append(self)
+
+        def on_message(self, msg):
+            for conn in connections:
+                try:
+                    conn.write_message(msg)
+                except:
+                    connections.remove(conn)
+
+        def on_close(self):
+            if self in connections:
+                connections.remove(self)
+
+
+    app = Application([
+        (r"/", MainHandler),
+        (r"/chat", ChatHandler)
+        ])
+
+    if __name__ == "__main__":
+        app.listen(8080)
+        IOLoop.instance().start()
 
 ## Android アプリケーション
 
