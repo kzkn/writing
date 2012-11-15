@@ -1190,8 +1190,6 @@ ping/pong は接続確認を行うための制御フレームです。ping を�
 まずは接続を確立するための open メソッドです。クライアントからサーバに向けて送信するハンドシェイクを構築します。
 
     def handshake(self, host, port):
-        hostport = host if port == 80 else '%s:%d' % (host, port)
-
         data = 'GET /chat HTTP/1.1\r\n'
 
 先頭行は Request-Line 形式でなければなりません。
