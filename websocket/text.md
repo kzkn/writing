@@ -739,11 +739,22 @@ WebSocket プロトコルは、
 
 ハンドシェイクはクライアント・サーバ間の接続を確立するためにやり取りされるメッセージです。ハンドシェイクは HTTP 上でやり取りされます。クライアントから以下のようなハンドシェイクが送信されると:
 
-TODO: handshake (client)
+    GET /chat HTTP/1.1
+    Host: server.example.com
+    Upgrade: websocket
+    Connection: Upgrade
+    Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+    Origin: http://example.com
+    Sec-WebSocket-Protocol: chat, superchat
+    Sec-WebSocket-Version: 13
 
 サーバは以下のようなハンドシェイクを返します:
 
-TODO: handshake (server)
+    HTTP/1.1 101 Switching Protocols
+    Upgrade: websocket
+    Connection: Upgrade
+    Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+    Sec-WebSocket-Protocol: chat
 
 見ての通り、ハンドシェイクは HTTP 要求と応答です。ただし有効なハンドシェイクであるための決まりがいくつかあります。要求は:
 
@@ -782,19 +793,39 @@ WebSocket は TCP の上に成り立つ独立したプロトコルです。HTTP 
 
 クライアントとサーバの両方で利用する、データのフレーミングを実装していきます。フレームは以下のような構造を持ちます:
 
-TODO: frame structure
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    +-+-+-+-+-------+-+-------------+-------------------------------+
+    |F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+    |I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+    |N|V|V|V|       |S|             |   (if payload len==126/127)   |
+    | |1|2|3|       |K|             |                               |
+    +-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+    |     Extended payload length continued, if payload len == 127  |
+    + - - - - - - - - - - - - - - - +-------------------------------+
+    |                               |Masking-key, if MASK set to 1  |
+    +-------------------------------+-------------------------------+
+    | Masking-key (continued)       |          Payload Data         |
+    +-------------------------------- - - - - - - - - - - - - - - - +
+    :                     Payload Data continued ...                :
+    + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+    |                     Payload Data continued ...                |
+    +---------------------------------------------------------------+
 
 ひとまず、このデータ構造から各フィールドを取り出すよう、コードを組んでいきます:
 
-TODO: code
+    first_byte = data[0]
+    fin = (first_byte >> 7) & 1
 
 まず FIN を取り出します。FIN はフレームが最後の断片であるかどうかを表すフィールドです。今回は1フレーム＝1メッセージとして扱うことにし、メッセージの断片化はサポートしないことにします。
 
-TODO: code
+    rsv1 = (first_byte >> 6) & 1
+    rsv2 = (first_byte >> 5) & 1
+    rsv3 = (first_byte >> 4) & 1
 
 次に RSV1, 2, 3 を取り出します。これらは「予約済みビット」で、基本的には利用しません。
 
-TODO: code
+    opcode = first_byte & 0xf
 
 次は OPCODE を取り出します。OPCODE はそのフレームの Payload をどう解釈するかを定義するフィールドです。以下のような値が定義されています:
 
@@ -809,11 +840,29 @@ TODO: code
   <tr><td>0xB-F</td><td>予約済み制御フレーム</td></tr>
 </table>
 
-TODO: code
+    second_byte = data[1]
+    mask = (second_byte >> 7) & 1
 
 次は MASK を取り出します。MASK はそのフレームの Payload がマスクされているかどうかを表すフラグです。クライアントからサーバに送るフレームの Payload は、必ずマスクされている必要があります。逆にサーバからクライアントに送るフレームの Payload は、必ずマスクされていない必要があります。
 
-TODO: code
+    payload_length = second_byte & 0x7f
+    if payload_length <= 125:
+        payload_length = payload_length
+        data = data[2:]
+    elif payload_length == 126:
+        payload_length = (data[2] << 8) \
+                       | (data[3] << 0)
+        data = data[4:]
+    elif payload_length == 127:
+        payload_length = (data[2] << 54) \
+                       | (data[3] << 48) \
+                       | (data[4] << 40) \
+                       | (data[5] << 32) \
+                       | (data[6] << 24) \
+                       | (data[7] << 16) \
+                       | (data[8] << 8) \
+                       | (data[9] << 0)
+        data = data[10:]
 
 次は Payload 長を取り出します。Payload 長は、その名の通り Payload の長さ（バイト数）を意味します。Payload 長の取り出し方は、他と比べて若干特殊です。
 
@@ -824,31 +873,87 @@ TODO: code
   <tr><td>127</td><td>Payload 長の後の 64bit (非負整数)</td></tr>
 </table>
 
-TODO: code
+    if mask:
+        masking_key = data[:4]
+        data = data[4:]
+    else:
+        masking_key = []
 
 次に MASKING-KEY を取り出します。MASKING-KEY は Payload のマスクに用いられたキーとなる値です。MASKING-KEY は MASK=1 の場合にのみ存在します。
 
-TODO: code
+    if len(data) == payload_length:
+        payload = data[:]
+    else:
+        payload = data[:payload_length]
 
 最後に Payload を取り出します。この値の解釈は OPCODE の値によって変わりますが、ここではとりあえずバイト列として保持しておきます。
 
 以下、ここまでで述べたフレームを解析するコードの全体です:
 
-TODO: code
+    def decode(data):
+        if isinstance(data, str):
+            data = [ord(c) for c in data]
+
+        first_byte = data[0]
+        fin = (first_byte >> 7) & 1
+        rsv1 = (first_byte >> 6) & 1
+        rsv2 = (first_byte >> 5) & 1
+        rsv3 = (first_byte >> 4) & 1
+        opcode = first_byte & 0xf
+
+        second_byte = data[1]
+        mask = (second_byte >> 7) & 1
+
+        payload_length = second_byte & 0x7f
+        if payload_length <= 125:
+            payload_length = payload_length
+            data = data[2:]
+        elif payload_length == 126:
+            payload_length = (data[2] << 8) \
+                           | (data[3] << 0)
+            data = data[4:]
+        elif payload_length == 127:
+            payload_length = (data[2] << 54) \
+                           | (data[3] << 48) \
+                           | (data[4] << 40) \
+                           | (data[5] << 32) \
+                           | (data[6] << 24) \
+                           | (data[7] << 16) \
+                           | (data[8] << 8) \
+                           | (data[9] << 0)
+            data = data[10:]
+
+        if mask:
+            masking_key = data[:4]
+            data = data[4:]
+        else:
+            masking_key = []
+
+        if len(data) == payload_length:
+            payload = data[:]
+        else:
+            payload = data[:payload_length]
+        return Frame(fin, rsv1, rsv2, rsv3, opcode, masking_key, payload)
 
 Payload のマスクは以下のロジックで行います:
 
-TODO: code
+    masked = []
+    for i in range(len(self.payload)):
+        masked.append(self.payload[i] ^ self.masking_key[i % 4])
+    self.payload = masked
 
 マスクの解除も同様です。
 
-OPCODE がテキストフレーム (0x1) の場合、Payload は UTF-8 の文字列でなければなりません。妥当な UTF-8 でなければ、不正なメッセージであるとして利用者にエラーを通知し、接続を終了させます。
-
-TODO: code
-
 簡単にテストしてみましょう:
 
-TODO: code
+    def test():
+        f1 = Frame.decode([0x81, 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f])
+        assert str(f1) == 'Hello'
+
+        f2 = Frame.decode(
+                [0x81, 0x85, 0x37, 0xfa, 0x21, 0x3d, 0x7f, 0x9f, 0x4d, 0x51, 0x58])
+        f2.unmask()
+        assert str(f2) == 'Hello'
 
 ## サーバを実装
 
@@ -865,150 +970,329 @@ TODO: code
 
 冒頭で述べた通り、ハンドシェイクは HTTP の Upgrade 要求として送られてきます。これを一定の決まりに従って処理していきます:
 
-TODO: code
+    def parse_handshake(self, data):
+        d = dict()
+        lines = data.split('\r\n')
+        d['Request-Line'] = lines[0]
+        # 続く
 
 先頭行は Request-Line 形式です。本来ならパスの取り出しや HTTP バージョンの確認が必要ですが、今回は省略します。
 
-TODO: code
+        # 続き
+        for line in lines[1:]:
+            if len(line):
+                name, value = line.split(': ', 1)
+                d[name.lower()] = value
+        return d
 
-以下は HTTP ヘッダが順不同で並びます。必須のものから処理していきます。
-
-TODO: code
-
-Host ヘッダは必須なので、存在を確認します。
-
-TODO: code
-
-Upgrade ヘッダは必須で、かつ値が "websocket" でなければなりません。
-
-TODO: code
-
-Connection ヘッダは必須で、かつ値に "Upgrade" を含まなければなりません。
-
-TODO: code
-
-Sec-WebSocket-Key ヘッダは必須です。この値はサーバからクライアントに向けて送信するハンドシェイクの Sec-WebSocket-Accept ヘッダに用います。
-
-TODO: code
-
-Sec-WebSocket-Version ヘッダは必須で、かつ値は 13 でなければなりません。
-
-以上がクライアントから送られてくるヘッダのチェックになります。何かひとつにでも引っかかればハンドシェイクを受け入れず、接続を失敗させます。
-
-以下、クライアントのハンドシェイクをチェックするコードの全体です:
-
-TODO: code
+それ以下は HTTP ヘッダが順不同で並びます。本来であればヘッダの有無や必須チェック、値の検証を行うべきですが、ここでは手を抜いて省略します。
 
 次に、クライアントのハンドシェイクに対する応答を構築します。
 
-TODO: code
+    def send_handshake(self, fields):
+        key = self.accept_key(fields['sec-websocket-key'])
+        data = 'HTTP/1.1 101 Switching Protocols\r\n'
 
-先頭行は Status-Line 形式です。接続を成功させる場合、ステータスコードは 101 とします。
+先頭行は Status-Line 形式です。接続を成功させる場合、ステータスコードは 101 とします。`accept_key` メソッドについては後述します。
 
-TODO: code
+        data += 'Upgrade: websocket\r\n'
 
 Upgrade ヘッダは必ず含めます。値は "websocket" でなければなりません。
 
-TODO: code
+        data += 'Connection: Upgrade\r\n'
 
 Connection ヘッダは必ず含めます。値は "Upgrade" でなければなりません。
 
-TODO: code
+        data += 'Sec-WebSocket-Accept: ' + key + '\r\n'
 
 Sec-WebSocket-Accept ヘッダは必ず含めます。このヘッダの値は、以下のロジックで算出します:
-
-Sec-WebSocket-Key の値と文字列 "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" を連結する
-SHA-1 ハッシュをとる
-SHA-1 ハッシュを Base64 にエンコードする
-
-以下、サーバからクライアントに向けて送信するハンドシェイクを構築するコードの全体です:
-
-TODO: code
-
-ハンドシェイクを送信した後は、このソケットに対してメッセージが届くようになるので、接続を切らずにそのまま保持します。
-以下、これまで解説したサーバのコード全体です:
-
-TODO: code
-
-### 制御フレームの処理
-
-クライアントから送られてくるフレームには、接続の切断や確認といった、データ転送が目的ではない「制御フレーム」があります。サーバは OPCODE が表すフレームの種類に応じて、適切に処理しなければなりません。
-
-TODO: code
-
-close 制御フレームを受信したら、クライアントに対して close 制御フレームを送信します。close 制御フレームの受信/送信が完了したあとは、WebSocket 接続が切断されたものとみなして TCP 接続を切断しなければなりません。
-
-なお、close 制御フレームには Payload を含んでいいことになっています。Payload を含む場合、先頭 2 バイトがステータスコード、残りが切断理由を表すテキスト (UTF-8) でなければなりません。
-
-TODO: code
-
-ping/pong は接続確認を行うための制御フレームです。ping を受信した端点は、できるだけ早く pong を返す必要があります。
-
-以下、サーバのコード全体です:
-
-TODO: code
-
-## クライアントを実装
-
-最後にクライアントを実装していきます。Jetty ライクな API にしてみようと思います。
-
-TODO: code
-
-まずは接続を確立するための open メソッドです。クライアントからサーバに向けて送信するハンドシェイクを構築します。
-
-TODO: code
-
-先頭行は Request-Line 形式でなければなりません。
-
-TODO: code
-
-Host ヘッダは必須です。リクエストを送る先の Host 名を指定します。
-
-TODO: code
-
-Upgrade ヘッダは必須です。値は "websocket" でなければなりません。
-
-TODO: code
-
-Connection ヘッダは必須です。値には "Upgrade" を含んでいなければなりません。
-
-TODO: code
-
-Sec-WebSocket-Version ヘッダは必須です。値は 13 でなければなりません。
-
-TODO: code
-
-Sec-WebSocket-Key ヘッダは必須です。ランダムに選択された 16 バイト値を Base64 にエンコードした値でなければなりません。
-
-TODO: code
-
-構築したハンドシェイクをソケットに書き込んで送信し、サーバからのハンドシェイクを待ちます。サーバからのハンドシェイクを受信したら、その内容を検証していきます。
-
-TODO: code
-
-先頭行は Status-Line 形式でなければなりません。ステータスコードが 101 以外であれば接続が何かしらの理由で完了していないので、ステータスコードに応じた処理を行わなければなりません（今回は省略します）。
-
-TODO: code
-
-Upgrade ヘッダは必須で、値は "websocket" でなければなりません。
-
-TODO: code
-
-Connection ヘッダは必須で、値は "Upgrade" でなければなりません。
-
-TODO: code
-
-Sec-WebSocket-Accept ヘッダは必須で、「サーバを実装する」で述べた、以下のアルゴリズムに従って算出される値でなければなりません:
 
 1. Sec-WebSocket-Key の値と文字列 "258EAFA5-E914-47DA-95CA-C5AB0DC85B11" を連結する
 2. SHA-1 ハッシュをとる
 3. SHA-1 ハッシュを Base64 にエンコードする
 
+    def accept_key(self, key):
+        GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+        return b64encode(sha1(key + GUID).digest())
+
+以下、サーバからクライアントに向けて送信するハンドシェイクを構築し、送信するコードの全体です:
+
+    def send_handshake(self, fields):
+        key = self.accept_key(fields['sec-websocket-key'])
+        data = 'HTTP/1.1 101 Switching Protocols\r\n'
+        data += 'Upgrade: websocket\r\n'
+        data += 'Connection: Upgrade\r\n'
+        data += 'Sec-WebSocket-Accept: ' + key + '\r\n'
+        data += '\r\n'
+        self.request.send(data)
+
+ハンドシェイクを送信した後は、このソケットに対してメッセージが届くようになるので、接続を切らずにそのまま保持します。
+以下、これまで解説したサーバのコード全体です:
+
+class WebSocketHandler(SocketServer.BaseRequestHandler):
+    def handshake(self, data):
+        fields = self.parse_handshake(data)
+        self.send_handshake(fields)
+
+    def parse_handshake(self, data):
+        d = dict()
+        lines = data.split('\r\n')
+        d['Request-Line'] = lines[0]
+        for line in lines[1:]:
+            if len(line):
+                name, value = line.split(': ', 1)
+                d[name.lower()] = value
+        return d
+
+    def send_handshake(self, fields):
+        key = self.accept_key(fields['sec-websocket-key'])
+        data = 'HTTP/1.1 101 Switching Protocols\r\n'
+        data += 'Upgrade: websocket\r\n'
+        data += 'Connection: Upgrade\r\n'
+        data += 'Sec-WebSocket-Accept: ' + key + '\r\n'
+        data += '\r\n'
+        self.request.send(data)
+
+    def accept_key(self, key):
+        GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+        return b64encode(sha1(key + GUID).digest())
+
+### フレームの処理
+
+クライアントから送られてくるフレームの処理を実装していきます。
+
+    def handle(self):
+        self.handshake(self.request.recv(1024))
+
+        while True:
+            data = self.request.recv(1024)
+            if not len(data):
+                continue  # empty data (sent by chrome)
+
+            frm = Frame.decode(data)
+            frm.unmask()
+
+受信したデータはすでに実装した `Frame` として扱います。`Frame#decode` で文字列を `Frame` 化します。また、クライアントから送られてくるデータは必ずマスクされているので、マスクを解除します。
+
+            if frm.opcode == 0x1:  # text
+                msg = 'you said: ' + str(frm)
+                reply = Frame(payload=msg)
+                self.request.send(reply.build())
+
+フレームがテキストフレームである場合の処理です。今回はクライアントが送ってきたテキストに `you said:` をつけて送り返すようにしました。`Frame#build` はフレームからソケットに書き込める形式の文字列を構築するメソッドです。
+
+クライアントから送られてくるフレームは、テキストデータなどの「データフレーム」だけではありません。接続の切断や確認といった、データ転送が目的ではない「制御フレーム」があります。サーバは OPCODE が表すフレームの種類に応じて、適切に処理しなければなりません。
+
+            elif frm.opcode == 0x8:  # close
+                self.close_connection()
+                break
+
+    def close_connection(self):
+        self.request.send(Frame(opcode=0x8).build())
+        self.finish()
+
+close 制御フレームを受信したら、クライアントに対して close 制御フレームを送信します。close 制御フレームの受信/送信が完了したあとは、WebSocket 接続が切断されたものとみなして TCP 接続を切断しなければなりません。
+
+なお、close 制御フレームには Payload を含んでいいことになっています。Payload を含む場合、先頭 2 バイトがステータスコード、残りが切断理由を表すテキスト (UTF-8) でなければなりません。
+
+            elif frm.opcode == 0x9:  # ping
+                pong = Frame(opcode=0xA, payload=str(frm))
+                self.request.send(pong.build())
+            elif frm.opcode == 0xA:  # pong
+                continue
+
+ping/pong は接続確認を行うための制御フレームです。ping を受信した端点は、できるだけ早く pong を返す必要があります。
+
+以下、サーバのコード全体です:
+
+    #
+    # server = WebSocketServer()
+    # server.start()
+    #
+
+    class WebSocketServer:
+        def __init__(self, host='localhost', port=8080):
+            self.host = host
+            self.port = port
+
+        def start(self):
+            SocketServer.ThreadingTCPServer.allow_reuse_address = True
+            server = SocketServer.ThreadingTCPServer((self.host, self.port),
+                    WebSocketHandler)
+            server.serve_forever()
+
+
+    class WebSocketHandler(SocketServer.BaseRequestHandler):
+        def handle(self):
+            self.handshake(self.request.recv(1024))
+
+            while True:
+                data = self.request.recv(1024)
+                if not len(data):
+                    continue  # empty data (sent by chrome)
+
+                frm = Frame.decode(data)
+                frm.unmask()
+                if frm.opcode == 0x1:  # text
+                    msg = 'you said: ' + str(frm)
+                    reply = Frame(payload=msg)
+                    self.request.send(reply.build())
+                elif frm.opcode == 0x8:  # close
+                    self.close_connection()
+                    break
+                elif frm.opcode == 0x9:  # ping
+                    pong = Frame(opcode=0xA, payload=str(frm))
+                    self.request.send(pong.build())
+                elif frm.opcode == 0xA:  # pong
+                    continue
+
+        def close_connection(self):
+            self.request.send(Frame(opcode=0x8).build())
+            self.finish()
+
+        def handshake(self, data):
+            fields = self.parse_handshake(data)
+            self.send_handshake(fields)
+
+        def parse_handshake(self, data):
+            d = dict()
+            lines = data.split('\r\n')
+            d['Request-Line'] = lines[0]
+            for line in lines[1:]:
+                if len(line):
+                    name, value = line.split(': ', 1)
+                    d[name.lower()] = value
+            return d
+
+        def send_handshake(self, fields):
+            key = self.accept_key(fields['sec-websocket-key'])
+            data = 'HTTP/1.1 101 Switching Protocols\r\n'
+            data += 'Upgrade: websocket\r\n'
+            data += 'Connection: Upgrade\r\n'
+            data += 'Sec-WebSocket-Accept: ' + key + '\r\n'
+            data += '\r\n'
+            self.request.send(data)
+
+        def accept_key(self, key):
+            GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+            return b64encode(sha1(key + GUID).digest())
+
+## クライアントを実装
+
+最後にクライアントを実装していきます。
+
+    def open(self, uri):
+        hostname, port = self.parse_uri(uri)
+        self.sock.connect((hostname, port))
+        self.handshake(hostname, port)
+        self.is_connected = True
+
+まずは接続を確立するための open メソッドです。クライアントからサーバに向けて送信するハンドシェイクを構築します。
+
+    def handshake(self, host, port):
+        hostport = host if port == 80 else '%s:%d' % (host, port)
+
+        data = 'GET /chat HTTP/1.1\r\n'
+
+先頭行は Request-Line 形式でなければなりません。
+
+        data += 'Host: ' + host + '\r\n'
+
+Host ヘッダは必須です。リクエストを送る先の Host 名を指定します。
+
+        data += 'Upgrade: websocket\r\n'
+
+Upgrade ヘッダは必須です。値は "websocket" でなければなりません。
+
+        data += 'Connection: Upgrade\r\n'
+
+Connection ヘッダは必須です。値には "Upgrade" を含んでいなければなりません。
+
+        data += 'Sec-WebSocket-Version: 13\r\n'
+
+Sec-WebSocket-Version ヘッダは必須です。値は 13 でなければなりません。
+
+        data += 'Sec-WebSocket-Key: ' + self.gen_sec_websocket_key() + '\r\n'
+
+    def gen_sec_websocket_key(self):
+        uid = uuid.uuid4()
+        return base64.encodestring(uid.bytes).strip()
+
+Sec-WebSocket-Key ヘッダは必須です。ランダムに選択された 16 バイト値を Base64 にエンコードした値でなければなりません。
+
+        self.sock.send(data)
+        self.sock.recv(1024)  # recv handshake response
+
+構築したハンドシェイクをソケットに書き込んで送信し、サーバからのハンドシェイクを待ちます。サーバからのハンドシェイクを受信したら、本来であればその内容を検証してなければなりません。が、今回は省略します。
+
 以上の検証が済めば、WebSocket の接続が確立されたものとみなすことができ、メッセージのやり取りが可能になります。
 
 以下、クライアントのコード全体です:
 
-TODO: code
+    #
+    # client = WebSocketClient()
+    # client.open('ws://localhost:8080/')
+    # client.send('hello')
+    # client.recv()
+    #
+
+    class WebSocketClient(object):
+        def __init__(self):
+            self.is_connected = False
+            self.sock = socket.socket()
+
+        def open(self, uri):
+            hostname, port = self.parse_uri(uri)
+            self.sock.connect((hostname, port))
+            self.handshake(hostname, port)
+            self.is_connected = True
+
+        def parse_uri(self, uri):
+            parsed = urlparse.urlparse(uri)
+            return parsed.hostname, parsed.port or 80
+
+        def handshake(self, host, port):
+            data = 'GET /chat HTTP/1.1\r\n'
+            data += 'Host: ' + host + '\r\n'
+            data += 'Upgrade: websocket\r\n'
+            data += 'Connection: Upgrade\r\n'
+            data += 'Sec-WebSocket-Key: ' + self.gen_sec_websocket_key() + '\r\n'
+            data += 'Sec-WebSocket-Version: 13\r\n'
+            data += '\r\n'
+            self.sock.send(data)
+            self.sock.recv(1024)  # recv handshake response
+
+        def gen_sec_websocket_key(self):
+            uid = uuid.uuid4()
+            return base64.encodestring(uid.bytes).strip()
+
+        def send(self, msg):
+            frm = Frame(masking_key=self.gen_masking_key(), payload=msg)
+            frm.mask()
+            self.sock.send(frm.build())
+
+        def gen_masking_key(self):
+            return [ord(c) for c in os.urandom(4)]
+
+        def recv(self):
+            while True:
+                data = self.sock.recv(1024)
+                frm = Frame.decode(data)
+                if frm.opcode == 0x1:  # text
+                    return str(frm)
+                elif frm.opcode == 0x8:  # close
+                    self.close()
+                    return None
+                elif frm.opcode == 0x9:  # ping
+                    pong = Frame(opcode=0xA, payload=str(frm))
+                    self.request.send(pong.build())
+
+        def close(self):
+            if self.is_connected:
+                self.sock.send(Frame(opcode=0x8).build())
+                self.sock.shutdown(socket.SHUT_RDWR)
+                self.is_connected = False
+                self.sock.close()
 
 ## 触れなかったこと
 
