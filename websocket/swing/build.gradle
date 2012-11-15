@@ -1,0 +1,13 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'org.creasys.wschat.App'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile group: 'org.eclipse.jetty', name: 'jetty-websocket', version: '8.+'
+  compile group: 'net.arnx', name: 'jsonic', version: '1.3.+'
+}
