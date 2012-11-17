@@ -59,7 +59,30 @@ WebSocket は上述した Ajax、Comet が持つ問題を解決できます。
 
 ## 仕様策定、実装状況
 
-TODO
+幾度かの仕様改定を経て、現在は RFC 6455 としてプロトコル仕様が公開されています。Proposed Standardの段階にあり、以降ドラフトを経て標準として確定されることになります。
+
+主要ブラウザの WebSocket 実装状況は以下の通りです。主要ブラウザの中では Android Browser のみ未実装です。
+
+<table>
+  <tr>
+    <th>Internet Explorer</th>
+    <th>Mozilla Firefox</th>
+    <th>Google Chrome</th>
+    <th>Safari</th>
+    <th>Opera</th>
+    <th>Android Browser</th>
+  </tr>
+  <tr>
+    <td>10</td>
+    <td>11</td>
+    <td>16</td>
+    <td>6</td>
+    <td>12.10</td>
+    <td>-</td>
+  </tr>
+</table>
+
+サーバは、ほとんどの主要な言語に実装が存在します。
 
 # 簡単なサンプル
 
