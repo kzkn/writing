@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import markdown
@@ -8,7 +8,8 @@ template = """
 <!DOCTYPE html>
 <html>
 <head>
-<title>Amazon Web Services §À§ƒ§§§∆</title>
+<meta charset="UTF-8">
+<title>Amazon Web Services „Å´„Å§„ÅÑ„Å¶</title>
 <link rel="stylesheet" href="text.css">
 </head>
 <body>
