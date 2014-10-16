@@ -37,6 +37,9 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 
     submitButton.addActionListener(this::onSubmitButtonActionPerformed);
 
+厳密には「メソッドそのもの」ではなく「メソッドを呼び出すラムダ式」を表
+現するのが、メソッド参照です。
+
 インスタンスメソッド、クラスメソッド、コンストラクタのいずれもメソッド
 参照として利用できます。
 
