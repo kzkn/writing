@@ -12,7 +12,17 @@ Lambda (ラムダ) に関連する文法拡張について見ていきます。
 Java 言語でラムダ式を書けるようになりました。新たに次のような式が書ける
 ようになりました。
 
-    x -> x + 1
+    (int x) -> { x + 1 }
+
+引数 x に 1 を足すという処理を表したラムダ式です。
+
+    (int x) -> { x + 1 }
+    ^^^^^^^    ^^^^^^^^^
+    引数部      処理本体
+
+ラムダ式は引数部と処理本体に分かれており、それらを -> で繋ぐという構文
+です。引数の数や処理本体の文の数に応じていくつかの略記が可能となってい
+ます。
 
 
 ### 関数型インタフェース ###
@@ -64,12 +74,12 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
  * 戻り値はメソッドの戻り値
 
 というシグネチャを持つ関数型インタフェースに適合します。例えば Object
-クラスの toString メソッドなら、
+クラスの equals メソッドなら、
 
-    Function<Object, String> fn = Object::toString;
+    BiFunction<Object, Object, Boolean> fn = Object::equals;
 
-といった具合で、Object を引数にとり String を返す関数型インタフェースの
-変数になります。
+といった具合で、レシーバーの Object と比較対象の Object を引数にとり
+Boolean を返す関数型インタフェースの変数になります。
 
 
 ### デフォルトメソッド ###
@@ -96,8 +106,8 @@ interface にメソッドのデフォルト実装を定義できるようにな�
         ...
     }
 
-複数の interface を実装して、デフォルトメソッドが衝突した場合の仕様をま
-とめました。
+複数の interface を実装して、デフォルトメソッドが衝突した場合のコンパイ
+ル結果をまとめました。
 
 <table>
   <thead>
@@ -205,8 +215,8 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 
 ### 無名内部クラス vs ラムダ式 ###
 
-ラムダが追加される前 Java 7 以前では、いわゆるラムダ的なことをやる際に
-は無名内部クラスという機能を使っていました:
+ラムダが追加される前 Java 7 以前では、いわゆるラムダ的なことを表現する
+際には無名内部クラスという機能を使っていました:
 
     button.addActionListener(new ActionListener() {
         @Override
@@ -458,6 +468,14 @@ Optional.map は次のように実装されています:
         }
     }
 
+なお、Optional 変数自体に null を代入することは依然として可能です:
+
+    Optional<String> s = null;
+    s.isPresent();  // NullPointerException
+
+Java 言語の機能でこういった事態を回避することは今のところ不可能であり、
+null を代入することがないよう、プログラマが注意する必要があります。
+
 
 ## Stream API ##
 
@@ -478,8 +496,8 @@ Common Lisp ではこんな風に書けます:
                            widgets)
             :initial-value 0)
 
-といった具合のものです。当然 Java でもラムダを使うことでこういった記述
-が可能になりました。
+といった具合のものです。当然 Java でもラムダを使うことで、この程度のラ
+ムダ式の応用は可能になりました。
 
 上の Java と Lisp のプログラムの大きな違いとして、Lisp のプログラムでは
 中間リストが生成されているという点があります。 `remove-if-not` 関数の戻
@@ -498,7 +516,7 @@ Lisp のプログラムを Java のラムダと Stream を使って翻訳する�
 といった具合になります。
 
 
-### 使ってみる ###
+### Stream API を使ってみる ###
 
 Java 7 以前のプログラムを Stream API を使って書きなおしてみます。
 
@@ -543,9 +561,9 @@ Java 7 以前のプログラムを Stream API を使って書きなおしてみ�
 
 スッキリしました。
 
-元のコードでもっさりしていた「Map から List を get し null チェックして、
-null なら new して put する」部分は、Collectors.groupingBy の中に押し込
-められました。
+元のコードで冗長だった (そしてなんとも Java っぽい) 「Map から List を
+get し null チェックして、null なら new して put する」部分は、
+Collectors.groupingBy の中に押し込められました。
 
 Map.entrySet でループする箇所も、forEach を利用することで、長ったらしい
 Map.Entry の型宣言を省くことができます。
@@ -565,9 +583,9 @@ Stream の操作は大きく中間操作と終端操作に分けられます。S
 端操作によって Stream をトラバースする際にマッピングが行われます。
 
     Stream.of("Dog", "Cat", "Dog", "Monkey", "Dog");
-          .peek(s -> System.out.println("Before distinct: " + s))
+          .peek(s -> System.out.println("Before distinct: " + s))  // 中間操作
           .distinct()
-          .forEach(s -> System.out.println("After distinct: " + s));
+          .forEach(s -> System.out.println("After distinct: " + s));  // 終端操作
 
 実行結果は
 
@@ -618,6 +636,7 @@ toLowerCase でマップしようとしたところで例外が発生してい�
 
 独自の中間操作
 独自の終端操作
+
 
 ## ラムダ/Stream をサポートする API ##
 
