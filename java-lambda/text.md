@@ -634,8 +634,63 @@ toUpperCase でマップして得た List は出力されていますが、そ�
 toLowerCase でマップしようとしたところで例外が発生しています。
 
 
-独自の中間操作
-独自の終端操作
+### 独自の中間操作 ###
+
+Stream API を利用していると、あらかじめ用意されている中間操作、終端操作
+では事足りず、独自の中間操作、終端操作を実装したくなるかもしれません。
+Stream API では独自の中間操作、終端操作を実装するための手段が用意されて
+います。
+
+中間操作は「Stream から Stream を生成する」処理のことを指します。なので
+独自の中間操作を実装したければ、端的に言えば Stream を受けて Stream を
+生成すればよいということになります。
+
+1 つ例として「2 つの Stream から取り出した要素を関数に適用しつつ 1 つの
+Stream にまとめる」という中間操作を考えてみます。
+
+    public static <T, U, R> Stream<R> zipWith(Stream<T> stream1, Stream<U> stream2, BiFunction<T, U, R> fn) {
+        Iterator<T> i1 = stream1.iterator();
+        Iterator<U> i2 = stream2.iterator();
+        Iterator<R> iter = new Iterator<R>() {
+            @Override
+            public boolean hasNext() {
+                return i1.hasNext() && i2.hasNext();
+            }
+
+            @Override
+            public R next() {
+                return fn.apply(i1.next(), i2.next());
+            }
+        };
+
+        Spliterator<Integer> spliter = Spliterators.spliteratorUnknownSize(
+                iter, Spliterator.NONNULL | Spliterator.ORDERED)
+        return StreamSupport.stream(spliter, false);
+    }
+
+こんな感じで使います:
+
+    Stream<Integer> ns1 = Stream.of(1, 2, 3, 4, 5);
+    Stream<Integer> ns2 = Stream.of(5, 4, 3, 2, 1);
+    zipWith(ns1, ns2, Math::max).forEach(System.out::println);
+
+    処理結果:
+    5
+    4
+    3
+    4
+    5
+
+zipWith で Stream のインスタンスを得るまでの流れを追うと:
+
+ 1. ソースの Stream から Iterator を得る
+ 2. 1 をラップした Iterator を生成する
+ 3. 2 の Iterator から Spliterator を生成する
+ 4. 3 の Spliterator をソースとして Stream を生成する
+
+という流れとなっています。この流れはもっとも基本的で単純な、Stream を構
+築するまでの流れです。Javadoc によれば、Spliterator の実装を工夫するこ
+とで、並列パフォーマンスの向上を狙うことができるようです。
 
 
 ## ラムダ/Stream をサポートする API ##
