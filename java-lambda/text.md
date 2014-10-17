@@ -17,10 +17,12 @@ Java 8 では Java 言語に対していくつかの文法拡張がなされま�
 Java 言語でラムダ式を書けるようになりました。新たに次のような式が書ける
 ようになりました。
 
+    :::java
     (int x) -> { x + 1 }
 
 引数 x に 1 を足すという処理を表したラムダ式です。
 
+    :::text
     (int x) -> { x + 1 }
     ^^^^^^^    ^^^^^^^^^
     引数部      処理本体
@@ -46,6 +48,7 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 関数型インタフェースの変数に、メソッドそのものを代入することができるよ
 うになりました。
 
+    :::java
     private void onSubmitButtonActionPerformed(ActionEvent e) {
         ...
     }
@@ -81,6 +84,7 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 というシグネチャを持つ関数型インタフェースに適合します。例えば `Object`
 クラスの `equals` メソッドなら、
 
+    :::java
     BiFunction<Object, Object, Boolean> fn = Object::equals;
 
 といった具合で、レシーバーの `Object` と比較対象の `Object` を引数にとり
@@ -97,6 +101,7 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 この言語拡張を利用して `List` や `Map` といった既存のインタフェースにラムダ
 を用いたメソッドが追加されています。
 
+    :::java
     public interface List<E> extends Collection<E> {
         ...
 
@@ -167,6 +172,7 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 方のデフォルトメソッドの実装を利用したい場合には、`super` キーワードを利
 用することでコンパイルエラーを回避できます。
 
+    :::java
     public static interface IF1 {
         public default int method(int x) { return x + 1; }
     }
@@ -186,6 +192,7 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 デフォルトメソッドの定義は interface のクラスファイル内に展開されるよう
 です。
 
+    :::text
     $ javap -p -c Tutor4\$IF2
     Compiled from "Tutor4.java"
     public interface Tutor4$IF2 {
@@ -200,6 +207,7 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 ラムダには直接関係ありませんが、interface に対するもうひとつの拡張とし
 て、interface にクラスメソッドを定義できるようになりました。
 
+    :::java
     @FunctionalInterface
     public interface Comparator<T> {
         ...
@@ -223,6 +231,7 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 ラムダが追加される前、すなわち Java 7 以前では、いわゆるラムダ的なこと
 を表現する際には無名内部クラスという機能を使っていました:
 
+    :::java
     button.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -236,12 +245,14 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 
 上の例をラムダ式を使って書きなおしてみます:
 
+    :::java
     button.addActionListener((ActionEvent e) -> {
         System.out.println("on button clicked");
     });
 
 もう少し削ってみます。
 
+    :::java
     button.addActionListener(e -> {
         System.out.println("on button clicked");
     });
@@ -250,6 +261,7 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 ているので、ほとんどの場合は省略可能です。また、今回の例ではラムダの引
 数は 1 つなので、仮引数部分のカッコも省略可能です。
 
+    :::java
     button.addActionListener(e -> System.out.println("on button clicked"));
 
 ラムダ式内部の処理が 1 文の場合、ブレースとセミコロンも省略可能です。
@@ -269,6 +281,7 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 ボタンを押下したときの処理をメソッド化している場合を考えてみます。
 Java 7 以前ではやはり無名内部クラスを利用する必要があり:
 
+    :::java
     button.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -283,6 +296,7 @@ Java 7 以前ではやはり無名内部クラスを利用する必要があり:
 というコードを書く必要がありました。
 Java 8 以降では、もちろんラムダ式を使うこともできますが:
 
+    :::java
     button.addActionListener(e -> onButtonActionPerformed(e));
 
     private void onButtonActionPerformed(ActionEvent e) {
@@ -291,6 +305,7 @@ Java 8 以降では、もちろんラムダ式を使うこともできますが:
 
 メソッド参照を使うことで次のような書き方も可能です:
 
+    :::java
     button.addActionListener(this::onButtonActionPerformed);
 
     private void onButtonActionPerformed(ActionEvent e) {
@@ -311,6 +326,7 @@ Java 言語におけるラムダ式とは何か？その答えは「関数型イ
 コード中に現れるラムダ式が、どの関数型インタフェースの型を持つオブジェ
 クトとして解釈されるかは、文脈に応じて変わります。
 
+    :::java
     // このアノテーションをつけることで、関数型インタフェースであることを
     // 明示できます。メソッドを追加したりすることでインタフェースが関数型
     // インタフェースの条件を満たさなくなると、コンパイルエラーが出ます。
@@ -343,6 +359,7 @@ IntFunc インタフェースの、後者は IntOp インタフェースの型�
 ラムダ式はあくまでも関数型インタフェースを型に持つオブジェクトなので、
 他の型のオブジェクトと同様に変数に持つことができます:
 
+    :::java
     IntFunc<Integer> fn1 = n -> n + 1;
     IntOp fn2 = n -> n + 1;
 
@@ -353,6 +370,7 @@ IntFunc インタフェースの、後者は IntOp インタフェースの型�
 出しに過ぎません。リフレクションによるメソッド呼び出し (`Method.invoke`)
 のような無駄なオーバーヘッドはありません。
 
+    :::java
     fn1.apply(1);
     fn2.apply(2);
 
@@ -419,6 +437,7 @@ foo から bar を get し、その bar から baz を get し、その baz か�
 value を get するプログラムを考えてみます。いずれも null になりうる可能
 性があるものとします。
 
+    :::java
     Foo foo = getFoo();
     if (foo == null)
         return null;
@@ -438,6 +457,7 @@ getter の戻り値それぞれに対して null チェックが必要ですの�
 
 このプログラムを `Optional` を使って書きなおしてみます:
 
+    :::java
     Optional<Foo> foo = Optional.ofNullable(getFoo());
     if (!foo.isPresent())
         return null;
@@ -459,6 +479,7 @@ getter の戻り値それぞれに対して null チェックが必要ですの�
 
 `Optional` とラムダを組み合わせることで、より簡潔に書くことができます。
 
+    :::java
     return getFoo().map(foo -> foo.getBar())
                    .map(bar -> bar.getBaz())
                    .map(baz -> baz.getValue())
@@ -470,6 +491,7 @@ getter の戻り値それぞれに対して null チェックが必要ですの�
 
 `Optional.map` メソッドは次のように実装されています:
 
+    :::java
     public<U> Optional<U> map(Function<? super T, ? extends U> mapper) {
         Objects.requireNonNull(mapper);
         if (!isPresent())
@@ -481,6 +503,7 @@ getter の戻り値それぞれに対して null チェックが必要ですの�
 
 なお、`Optional` 変数自体に `null` を代入することは依然として可能です:
 
+    :::java
     Optional<String> s = null;
     s.isPresent();  // NullPointerException
 
@@ -493,6 +516,7 @@ Java 言語の機能でこういった事態を回避することは今のとこ
 ラムダのよくある用法として、リストに対する操作を、制御構文を使わず簡潔
 に書けるというものがあります。例えば Java のこんなコードが:
 
+    :::java
     int sum = 0;
     for (Widget w : widgets) {
         if (w.getColor() == RED) {
@@ -502,6 +526,7 @@ Java 言語の機能でこういった事態を回避することは今のとこ
 
 Common Lisp ではこんな風に書けます:
 
+    :::common-lisp
     (reduce (lambda (sum w) (+ sum (get-weight w)))
             (remove-if-not (lambda (w) (= (get-color w) RED))
                            widgets)
@@ -521,6 +546,7 @@ Common Lisp ではこんな風に書けます:
 
 Lisp のプログラムを Java のラムダと Stream を使って翻訳すると:
 
+    :::java
     widgets.stream()
            .filter(w -> w.getColor() == RED)
            .collect(Collectors.summingInt(w -> w.getWeight()));
@@ -539,6 +565,7 @@ Java 7 以前のプログラムを Stream API を使って書きなおしてみ�
 
 というプログラムを考えてみます。
 
+    :::java
     List<Employee> employees = getEmployees();
     Map<Department, List<Employee>> dep2emps = new HashMap<>();
 
@@ -565,6 +592,7 @@ Java 7 以前のプログラムを Stream API を使って書きなおしてみ�
 
 これを Stream API を使って書きなおしてみます:
 
+    :::java
     List<Employee> employees = getEmployees();
     employees.stream()
              .filter(e -> e.isJoinedBefore(2000))
@@ -594,6 +622,7 @@ Stream の操作は大きく中間操作と終端操作に分けられます。S
 呼び出しても、即座に値のマッピングが行われることはなく、その後に続く終
 端操作によって Stream をトラバースする際にマッピングが行われます。
 
+    :::java
     Stream.of("Dog", "Cat", "Dog", "Monkey", "Dog");
           .peek(s -> System.out.println("Before distinct: " + s))  // 中間操作
           .distinct()
@@ -601,6 +630,7 @@ Stream の操作は大きく中間操作と終端操作に分けられます。S
 
 実行結果は
 
+    :::text
     Before distinct: Dog
     After distinct: Dog
     Before distinct: Cat
@@ -623,6 +653,7 @@ Stream の操作は大きく中間操作と終端操作に分けられます。S
 `Stream.forEach` や `IntStream.sum` などが該当します。終端操作が完了すると
 Stream は消費済みとみなされ、以降は使用できなくなります。
 
+    :::java
     Stream<String> stream = Stream.of("hero", "dog", "monkey", "bird");
     List<String> legend = stream.map(String::toUpperCase).collect(Collectors.toList());
     System.out.println(legend);
@@ -634,6 +665,7 @@ Stream は消費済みとみなされ、以降は使用できなくなります�
 
 実行結果:
 
+    :::text
     [HERO, DOG, MONKEY, BIRD]
     Exception in thread "main" java.lang.IllegalStateException: stream has already been operated upon or closed
             at java.util.stream.AbstractPipeline.<init>(AbstractPipeline.java:203)
@@ -664,6 +696,7 @@ Stream API では独自の中間操作、終端操作を実装するための手
 例として「2 つの Stream から取り出した要素を関数に適用しつつ 1 つの
 Stream にまとめる」という中間操作を考えてみます。
 
+    :::java
     public static <T, U, R> Stream<R> zipWith(Stream<T> stream1, Stream<U> stream2,
                                               BiFunction<? super T, ? super U, ? extends R> fn) {
         Iterator<T> i1 = stream1.iterator();
@@ -687,11 +720,14 @@ Stream にまとめる」という中間操作を考えてみます。
 
 こんな感じで使います:
 
+    :::java
     Stream<Integer> ns1 = Stream.of(1, 2, 3, 4, 5);
     Stream<Integer> ns2 = Stream.of(5, 4, 3, 2, 1);
     zipWith(ns1, ns2, Math::max).forEach(System.out::println);
 
-    処理結果:
+実行結果:
+
+    :::text
     5
     4
     3
@@ -727,6 +763,7 @@ Stream にまとめる」という中間操作を考えてみます。
 
 さっそくですが、ラムダ式のコンパイル結果を見てます。
 
+    :::text
     $ cat UseLambda.java
     import java.util.function.*;
 
@@ -827,6 +864,7 @@ bootstrap メソッドとは、`invokedynamic` に関連付けられる `CallSit
 
 UseLambda に -v オプションをつけて javap してみます:
 
+    :::text
     $ javap -v -c -p UseLambda
     Classfile /home/kazuki/sources/writing/java-lambda/sandbox/UseLambda.class
       Last modified 2014/10/13; size 1018 bytes
@@ -961,6 +999,7 @@ UseLambda に -v オプションをつけて javap してみます:
 
 少し追いかけてみます:
 
+    :::java
     public class LambdaMetafactory {
         ...
 
@@ -993,6 +1032,7 @@ UseLambda に -v オプションをつけて javap してみます:
 
 `InnerClassLambdaMetafactory` クラスの `buildCallSite` メソッドを追ってみます。
 
+    :::java
     /* package */ final class InnerClassLambdaMetafactory extends AbstractValidatingLambdaMetafactory {
         ...
         private static final String NAME_FACTORY = "get$Lambda";
@@ -1051,6 +1091,7 @@ UseLambda に -v オプションをつけて javap してみます:
 `invokedType` によって表現されるメソッドの引数は、ラムダ式がキャプチャす
 る変数、すなわちラムダ式の内部からアクセスされる外側の変数です。
 
+    :::java
     void method() {
         callWithIt1(x -> x + 1);  // (1)
         int y = 1;
@@ -1066,6 +1107,7 @@ UseLambda に -v オプションをつけて javap してみます:
 
 まず、キャプチャする変数がない場合に生成している `CallSite` を見てみます:
 
+    :::java
     Object inst = ctrs[0].newInstance();
     return new ConstantCallSite(MethodHandles.constant(samBase, inst));
 
@@ -1078,6 +1120,7 @@ UseLambda に -v オプションをつけて javap してみます:
 
 次にキャプチャする変数がある場合に生成している CallSite を見てみます:
 
+    :::java
     private static final String NAME_FACTORY = "get$Lambda";
     ...
 
@@ -1123,6 +1166,7 @@ UseLambda に -v オプションをつけて javap してみます:
 クラスですが、実際どのようなプロキシクラスが生成されているのか、デバッ
 グ用のオプションを使うことで確認することができます。
 
+    :::text
     $ cat UseLambda.java
     import java.util.function.*;
 

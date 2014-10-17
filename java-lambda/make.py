@@ -12,6 +12,7 @@ template = """
 <meta charset="UTF-8">
 <title>Java 8 - Lambda / Stream API</title>
 <link rel="stylesheet" href="text.css">
+<link rel="stylesheet" href="codehilite.css">
 </head>
 <body>
 %s
@@ -21,7 +22,7 @@ template = """
 
 buf = StringIO.StringIO()
 try:
-    markdown.markdownFromFile('text.md', buf)
+    markdown.markdownFromFile('text.md', buf, extensions=['codehilite'])
 
     soup = BeautifulSoup(buf.getvalue())
     buf.truncate(0)
