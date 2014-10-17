@@ -1,11 +1,16 @@
 # Java 8 - Lambda / Stream API #
 
-はじめに
+2014/3/18 に Java SE 8 がリリースされました。Java 8 では Java 5 以来と
+なるような大きな言語拡張がなされました。ラムダ式、型アノテーション、
+Date and Time API、高速JavaScriptエンジン、JavaFX 8 などなど。。。
+
+今回はこの中のラムダ式と Stream API を取り上げます。
+
 
 ## ラムダに関連する文法拡張 ##
 
 Java 8 では Java 言語に対していくつかの文法拡張がなされました。ここでは
-Lambda (ラムダ) に関連する文法拡張について見ていきます。
+ラムダに関連する文法拡張について見ていきます。
 
 ### ラムダ記法 ###
 
@@ -67,7 +72,7 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 いては、同じ名前のクラスメソッド (例: Integer::toString) がある場合、あ
 いまいであるとしてコンパイルエラーとなります。
 
-インスタンスメソッドへのメソッド参照は、
+「クラス名::メソッド名」で表すインスタンスメソッドへのメソッド参照は、
 
  * 第一引数はメソッドのレシーバー
  * 第二引数以降はメソッドの引数
@@ -89,8 +94,8 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 ドを追加しつつ、アプリケーションプログラムのコンパイルエラーを回避する
 ためです。
 
-この言語拡張を利用して、List や Map といった既存の API に、ラムダを用い
-たメソッドが追加されています。
+この言語拡張を利用して List や Map といった既存のインタフェースにラムダ
+を用いたメソッドが追加されています。
 
     public interface List<E> extends Collection<E> {
         ...
@@ -106,8 +111,8 @@ interface にメソッドのデフォルト実装を定義できるようにな�
         ...
     }
 
-複数の interface を実装して、デフォルトメソッドが衝突した場合のコンパイ
-ル結果をまとめました。
+複数の interface を実装して、メソッド名が衝突した場合のコンパイル結果を
+まとめました。
 
 <table>
   <thead>
@@ -158,9 +163,9 @@ interface にメソッドのデフォルト実装を定義できるようにな�
   </tbody>
 </table>
 
-多重継承によってコンパイルエラーになるケースで、片方のデフォルトメソッ
-ドの実装を利用したい場合には、super キーワードを利用することでコンパイ
-ルエラーを回避できます。
+多重継承によってコンパイルエラーになるケース (表では 4 のケース) で、片
+方のデフォルトメソッドの実装を利用したい場合には、super キーワードを利
+用することでコンパイルエラーを回避できます。
 
     public static interface IF1 {
         public default int method(int x) { return x + 1; }
@@ -215,8 +220,8 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 
 ### 無名内部クラス vs ラムダ式 ###
 
-ラムダが追加される前 Java 7 以前では、いわゆるラムダ的なことを表現する
-際には無名内部クラスという機能を使っていました:
+ラムダが追加される前、すなわち Java 7 以前では、いわゆるラムダ的なこと
+を表現する際には無名内部クラスという機能を使っていました:
 
     button.addActionListener(new ActionListener() {
         @Override
@@ -226,7 +231,8 @@ interface にメソッドのデフォルト実装を定義できるようにな�
     });
 
 入力の負担は IDE の自動補完によって軽減されたりもしますが、やりたいこと
-に対するコード量がどうしても増えてしまう傾向があります。
+に対するコード量が増える傾向にあり、他のプログラミング言語に比べるとど
+うしても冗長な表現となってしまっていました。
 
 上の例をラムダ式を使って書きなおしてみます:
 
@@ -344,8 +350,11 @@ IntFunc インタフェースの、後者は IntOp インタフェースの型�
 決められます。
 
 また、ラムダ式の呼び出しはあくまでも関数型インタフェースのメソッド呼び
-出しに過ぎません。リフレクションによるメソッド呼び出し (Method#invoke)
+出しに過ぎません。リフレクションによるメソッド呼び出し (Method.invoke)
 のような無駄なオーバーヘッドはありません。
+
+    fn1.apply(1);
+    fn2.apply(2);
 
 
 ### 汎用的な関数型インタフェース - java.util.function ###
@@ -427,6 +436,8 @@ value を get するプログラムを考えてみます。いずれも null に
 getter の戻り値それぞれに対して null チェックが必要ですので、大体こんな
 プログラムを書いていました。
 
+このプログラムを Optional を使って書きなおしてみます:
+
     Optional<Foo> foo = Optional.ofNullable(getFoo());
     if (!foo.isPresent())
         return null;
@@ -499,13 +510,14 @@ Common Lisp ではこんな風に書けます:
 といった具合のものです。当然 Java でもラムダを使うことで、この程度のラ
 ムダ式の応用は可能になりました。
 
-上の Java と Lisp のプログラムの大きな違いとして、Lisp のプログラムでは
+この Java と Lisp のプログラムの大きな違いとして、Lisp のプログラムでは
 中間リストが生成されているという点があります。 `remove-if-not` 関数の戻
 り値としてリストが 1 つ生成されています。リストのサイズ次第では、無視で
 きないほどのオーバーヘッドになりえます。
 
-こうした問題への対応としては、多くの場合は遅延リストが利用されます。
-Java 8 では Stream API としてその枠が設けられました。
+関数型のプログラミングスタイルを保ったうえでこうした問題に対応する際、
+多くの場合は遅延リストが利用されます。Java 8 では Stream API としてその
+枠が設けられました。
 
 Lisp のプログラムを Java のラムダと Stream を使って翻訳すると:
 
@@ -523,7 +535,7 @@ Java 7 以前のプログラムを Stream API を使って書きなおしてみ�
  * 社員のリストから
  * 西暦 2000 年以前に入社した社員を抽出し
  * 社員を部署コードごとに分類し
- * 各部署の管理者が社員の評価を実施する
+ * 各部署の管理者が、部署内の全社員の評価を実施する
 
 というプログラムを考えてみます。
 
@@ -549,14 +561,14 @@ Java 7 以前のプログラムを Stream API を使って書きなおしてみ�
         dep.getManager().rating(emps);
     }
 
-なんだかよく見るプログラムです。
+なんだかよく見る構成のプログラムです。
 
 これを Stream API を使って書きなおしてみます:
 
     List<Employee> employees = getEmployees();
     employees.stream()
              .filter(e -> e.isJoinedBefore(2000))
-             .collect(Collectors.groupingBy(Employee::getDepartment()))
+             .collect(Collectors.groupingBy(Employee::getDepartment))
              .forEach((dep, emps) -> dep.getManager().rating(emps));
 
 スッキリしました。
@@ -639,16 +651,19 @@ toLowerCase でマップしようとしたところで例外が発生してい�
 Stream API を利用していると、あらかじめ用意されている中間操作、終端操作
 では事足りず、独自の中間操作、終端操作を実装したくなるかもしれません。
 Stream API では独自の中間操作、終端操作を実装するための手段が用意されて
-います。
+います。ただし Stream インタフェースにメソッドを追加するようなことはで
+きないため、ユーティリティクラスのクラスメソッドとして定義するといった
+手段をとる必要があります。
 
 中間操作は「Stream から Stream を生成する」処理のことを指します。なので
 独自の中間操作を実装したければ、端的に言えば Stream を受けて Stream を
-生成すればよいということになります。
+生成する処理を書けばよいということになります。
 
-1 つ例として「2 つの Stream から取り出した要素を関数に適用しつつ 1 つの
+例として「2 つの Stream から取り出した要素を関数に適用しつつ 1 つの
 Stream にまとめる」という中間操作を考えてみます。
 
-    public static <T, U, R> Stream<R> zipWith(Stream<T> stream1, Stream<U> stream2, BiFunction<T, U, R> fn) {
+    public static <T, U, R> Stream<R> zipWith(Stream<T> stream1, Stream<U> stream2,
+                                              BiFunction<? super T, ? super U, ? extends R> fn) {
         Iterator<T> i1 = stream1.iterator();
         Iterator<U> i2 = stream2.iterator();
         Iterator<R> iter = new Iterator<R>() {
@@ -693,22 +708,16 @@ zipWith で Stream のインスタンスを得るまでの流れを追うと:
 とで、並列パフォーマンスの向上を狙うことができるようです。
 
 
-## ラムダ/Stream をサポートする API ##
-
-java.nio.file (Files.lines, walk ...)
-java.util (Map.computeIfAbsent ...)
-java.util.concurrent
-
-
-## ラムダ式の評価 ##
+## ラムダ式の実行 ##
 
 ラムダ式の呼び出しはインタフェースのメソッドと同様であるということは前
-述した通りです。では、ラムダ式そのものの評価 (= ラムダ式から関数型イン
+述した通りです。では、ラムダ式そのものの実行 (= ラムダ式から関数型イン
 タフェースのオブジェクトを得る処理) はどのように行われるのか？
 
 その真相はラムダ式を伴う Java プログラムをコンパイルして生成されるクラ
-スファイルを解析していくことで確認することができます。ここではこれにつ
-いて触れていきます。
+スファイルを解析していくことで確認することができます。ここではラムダ式
+を伴うクラスファイルを解析し、ラムダ式がどのように実行されるのかを追っ
+ていきます。
 
 
 ### ラムダ式のコンパイル結果 ###
@@ -766,13 +775,18 @@ java.util.concurrent
 メソッド呼び出し (この例では applyAsInt) が、巡り巡って lambda$main$0
 にたどり着きます。
 
-この関連付けを行うのが invokedynamic 命令です。
+ラムダ式の実行における
+
+ * ラムダ式から関数型インタフェースのオブジェクトを生成
+ * インタフェースメソッドと実体メソッドの関連付け
+
+この invokedynamic 命令が行います。
 
 
 ### invokedynamic ###
 
-invokedynamicは Java 7 から追加された JVM の呼び出し命令です。Java 6 以
-前は 4 つの呼び出し命令がありました:
+invokedynamic は Java 7 から追加された JVM の呼び出し命令です。Java 6
+以前は 4 つの呼び出し命令がありました:
 
  * invokestatic: 静的メソッドの呼び出し
  * invokevirtual: 動的ディスパッチを必要とするメソッド呼び出し
@@ -780,30 +794,29 @@ invokedynamicは Java 7 から追加された JVM の呼び出し命令です。
  * invokespecial: 上記以外のメソッド (コンストラクタ、private メソッドなど) の呼び出し命令
 
 これらの呼び出し命令はコンパイル時に呼び出し先のメソッドが決定されます
-が、invokedynamic は実行時に呼び出し先のメソッドが決定するという点が大
+が、invokedynamic は実行時に呼び出し先のメソッドを決定するという点が大
 きく異なります。
-
-![invokedynamic](invokedynamic.png)
 
 invokedynamic によるメソッド呼び出しの流れは次の通りです:
 
  1. invokedynamic に関連付けられている bootstrap メソッドを呼び出す
- 2. Bootstrap メソッドは CallSite オブジェクトを返す
+ 2. bootstrap メソッドが CallSite オブジェクトを返す
  3. CallSite から呼び出し先の MethodHandle を得る
  4. MethodHandle を経由して、メソッドを呼び出す
 
 bootstrap メソッドとは、invokedynamic に関連付けられる CallSite を構築
-する処理が実装された static メソッドです。すべての invokedynamic 命令は
-bootstrap メソッドへの参照を持っています。CallSite の構築と、
-MethodHandle の初期値を CallSite に紐付けます。bootstrap メソッドの呼び
-出しは、その invokedynamic 命令が初めて実行されるときにだけ行われます。
+する処理が実装された static メソッドです。すべての invokedynamic 命令は、
+それぞれ対応する bootstrap メソッドへの参照を持っています。bootstrap メ
+ソッドは CallSite の構築と、MethodHandle の初期値を CallSite に紐付けま
+す。bootstrap メソッドの呼び出しは、その invokedynamic 命令が初めて実行
+されるときにだけ行われます。
 
 CallSite が返す MethodHandle は、常に同じものでも構いませんし、毎回違う
-ものでも構いません。このように呼び出し先のメソッドが動的に変えられる点が、
+ものでも構いません。このように呼び出し先のメソッドを動的に変えられる点が、
 他の 4 つの呼び出し命令と大きく異なります。
 
 
-### LambdaMetafactory ###
+### ラムダ式の bootstrap メソッド - LambdaMetafactory.metafactory ###
 
 前述した通り、ラムダ式は invokedynamic 命令にコンパイルされます。ラムダ
 式の invokedynamic 命令には LambdaMetafactory クラスの metafactory メソッ
@@ -934,14 +947,14 @@ metafactory メソッド内では、
 
  * ラムダ式の実体となるオブジェクトの生成戦略を決定
  * lambda$main$0 メソッドを呼び出すプロキシクラスの生成
- * アダプタクラスのメソッドを呼び出す MethodHandle を生成
+ * プロキシクラスのオブジェクトを返す MethodHandle を生成
 
 といったことを行います。
 
-プロキシクラスが、ラムダ式の実体となるオブジェクトであると言えます。ラ
-ムダ式が表す関数型インタフェースを実装したクラスです。プロキシクラスが
-実装したメソッドから、ラムダ式の処理の実体 (lambda$main$0 メソッドなど)
-が呼び出されます。
+このプロキシクラスのオブジェクトこそ、ラムダ式の実体となるオブジェクト
+です。プロキシクラスはラムダ式が表す関数型インタフェースを実装したクラ
+スであり、その実装メソッドからラムダ式の処理の実体 (lambda$main$0 メソッ
+ドなど) が呼び出されます。
 
 少し追いかけてみます:
 
@@ -970,10 +983,10 @@ metafactory メソッド内では、
 InnerClassLambdaMetafactory の buildCallSite メソッドの戻り値を返してい
 ます。
 
-invokedType は CallSite の期待されるシグネチャを表します。これはラムダ
-式が実装する関数型インタフェースのシグネチャ**ではなく**、ラムダ式によっ
-て表現されるオブジェクトを得るために呼び出されるメソッドのシグネチャで
-す。
+invokedType は CallSite が返す MethodHandle に期待されるシグネチャを表し
+ます。これはラムダ式が実装する関数型インタフェースのシグネチャ**ではなく**、
+ラムダ式によって表現されるオブジェクトを得るために呼び出されるメソッドの
+シグネチャです。
 
 InnerClassLambdaMetafactory を追ってみます。
 
@@ -1050,13 +1063,8 @@ invokedType によって表現されるメソッドの引数は、ラムダ式�
 
 まず、キャプチャする変数がない場合に生成している CallSite を見てみます:
 
-    try {
-        Object inst = ctrs[0].newInstance();
-        return new ConstantCallSite(MethodHandles.constant(samBase, inst));
-    }
-    catch (ReflectiveOperationException e) {
-        throw new LambdaConversionException("Exception instantiating lambda object", e);
-    }
+    Object inst = ctrs[0].newInstance();
+    return new ConstantCallSite(MethodHandles.constant(samBase, inst));
 
 ここで生成している CallSite が持つメソッドハンドルは、
 MethodHandles.constant が返すメソッドハンドルです。
@@ -1070,20 +1078,14 @@ MethodHandles.constant は、オブジェクトとその型を引数に取り、
     private static final String NAME_FACTORY = "get$Lambda";
     ...
 
-    try {
-        UNSAFE.ensureClassInitialized(innerClass);
-        return new ConstantCallSite(
-                MethodHandles.Lookup.IMPL_LOOKUP
-                     .findStatic(innerClass, NAME_FACTORY, invokedType));
-    }
-    catch (ReflectiveOperationException e) {
-        throw new LambdaConversionException("Exception finding constructor", e);
-    }
+    return new ConstantCallSite(
+            MethodHandles.Lookup.IMPL_LOOKUP
+                 .findStatic(innerClass, NAME_FACTORY, invokedType));
 
-ここで生成している CallSite が持つメソッドハンドルは、innerClass の
-static メソッドである get$Lambda への参照です。そのシグネチャは
-invokedType で表現されるシグネチャ、つまりキャプチャする変数を引数に取
-り、プロキシクラスのインスタンスを返すメソッドです。
+ここで生成している CallSite が持つメソッドハンドルは、innerClass のクラ
+スメソッドである get$Lambda への参照です。そのシグネチャはinvokedType
+で表現されるシグネチャ、つまりキャプチャする変数を引数に取り、プロキシ
+クラスのインスタンスを返すメソッドです。
 
 いずれも場合であっても CallSite が返すメソッドハンドルを呼び出すと、プ
 ロキシクラスのインスタンスが返ってきます。ただしそのオブジェクトの生成
@@ -1095,6 +1097,15 @@ invokedType で表現されるシグネチャ、つまりキャプチャする�
 つまり、ラムダ式によって表現される関数型インタフェースのオブジェクトの
 実体は、metafactory メソッド内で実行時に生成されるプロキシクラスのイン
 スタンスであると言えます。
+
+ラムダ式によるオブジェクトの生成戦略をまとめると:
+
+ * キャプチャする変数がある場合
+    * ラムダ式を通るたび、毎回インスタンスを生成する
+ * キャプチャする変数がない場合
+    * はじめてラムダ式を通るときに、一度だけインスタンスを生成する
+
+となります。
 
 
 ### プロキシクラス ###
