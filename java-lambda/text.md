@@ -34,7 +34,7 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 
 文法の拡張というわけではなく、概念として追加されています。抽象メソッド
 をひとつだけ持つインタフェースを、関数型インタフェースと呼びます。イン
-タフェースの定義に FunctionalInterface アノテーションを付加することで、
+タフェースの定義に `FunctionalInterface` アノテーションを付加することで、
 関数型インタフェースであることを明示できるようになっています。
 
 ラムダ式と後述するメソッド参照は、すべて関数型インタフェースの変数とし
@@ -69,7 +69,7 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 という文法です。
 
 インスタンスメソッドへのメソッド参照を表す「クラス名::メソッド名」につ
-いては、同じ名前のクラスメソッド (例: Integer::toString) がある場合、あ
+いては、同じ名前のクラスメソッド (例: `Integer::toString`) がある場合、あ
 いまいであるとしてコンパイルエラーとなります。
 
 「クラス名::メソッド名」で表すインスタンスメソッドへのメソッド参照は、
@@ -78,23 +78,23 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
  * 第二引数以降はメソッドの引数
  * 戻り値はメソッドの戻り値
 
-というシグネチャを持つ関数型インタフェースに適合します。例えば Object
-クラスの equals メソッドなら、
+というシグネチャを持つ関数型インタフェースに適合します。例えば `Object`
+クラスの `equals` メソッドなら、
 
     BiFunction<Object, Object, Boolean> fn = Object::equals;
 
-といった具合で、レシーバーの Object と比較対象の Object を引数にとり
-Boolean を返す関数型インタフェースの変数になります。
+といった具合で、レシーバーの `Object` と比較対象の `Object` を引数にとり
+`Boolean` を返す関数型インタフェースの変数になります。
 
 
 ### デフォルトメソッド ###
 
-interface にメソッドのデフォルト実装を定義できるようになりました。List
-や Map など、既存 API で定義されていた interface にラムダを利用したメソッ
+interface にメソッドのデフォルト実装を定義できるようになりました。`List`
+や `Map` など、既存 API で定義されていた interface にラムダを利用したメソッ
 ドを追加しつつ、アプリケーションプログラムのコンパイルエラーを回避する
 ためです。
 
-この言語拡張を利用して List や Map といった既存のインタフェースにラムダ
+この言語拡張を利用して `List` や `Map` といった既存のインタフェースにラムダ
 を用いたメソッドが追加されています。
 
     public interface List<E> extends Collection<E> {
@@ -164,7 +164,7 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 </table>
 
 多重継承によってコンパイルエラーになるケース (表では 4 のケース) で、片
-方のデフォルトメソッドの実装を利用したい場合には、super キーワードを利
+方のデフォルトメソッドの実装を利用したい場合には、`super` キーワードを利
 用することでコンパイルエラーを回避できます。
 
     public static interface IF1 {
@@ -246,7 +246,7 @@ interface にメソッドのデフォルト実装を定義できるようにな�
         System.out.println("on button clicked");
     });
 
-仮引数の型 (例では ActionEvent) はコンパイラが推論してくれるようになっ
+仮引数の型 (例では `ActionEvent`) はコンパイラが推論してくれるようになっ
 ているので、ほとんどの場合は省略可能です。また、今回の例ではラムダの引
 数は 1 つなので、仮引数部分のカッコも省略可能です。
 
@@ -304,9 +304,9 @@ Java 言語におけるラムダ式とは何か？その答えは「関数型イ
 を持つオブジェクト」です。
 
 関数型インタフェースとは、抽象メソッドをひとつだけ持つインタフェースの
-ことを指します。例えば run メソッドだけを抽象メソッドとして持つ
-java.lang.Runnable インタフェースや、compare メソッドだけを抽象メソッド
-として持つ java.util.Comparator インタフェースなどがこれに該当します。
+ことを指します。例えば `run` メソッドだけを抽象メソッドとして持つ
+`java.lang.Runnable` インタフェースや、`compare` メソッドだけを抽象メソッド
+として持つ `java.util.Comparator` インタフェースなどがこれに該当します。
 
 コード中に現れるラムダ式が、どの関数型インタフェースの型を持つオブジェ
 クトとして解釈されるかは、文脈に応じて変わります。
@@ -350,7 +350,7 @@ IntFunc インタフェースの、後者は IntOp インタフェースの型�
 決められます。
 
 また、ラムダ式の呼び出しはあくまでも関数型インタフェースのメソッド呼び
-出しに過ぎません。リフレクションによるメソッド呼び出し (Method.invoke)
+出しに過ぎません。リフレクションによるメソッド呼び出し (`Method.invoke`)
 のような無駄なオーバーヘッドはありません。
 
     fn1.apply(1);
@@ -359,60 +359,60 @@ IntFunc インタフェースの、後者は IntOp インタフェースの型�
 
 ### 汎用的な関数型インタフェース - java.util.function ###
 
-関数型インタフェースの例として Runnable や Comparator を挙げてきました。
+関数型インタフェースの例として `Runnable` や `Comparator` を挙げてきました。
 Java 7 以前の API では、こういった具合に用途に応じたインタフェースが用
 意されてきましたが、Java 8 では汎用的な関数型インタフェースが用意されま
-した。新たに追加された java.util.function パッケージに定義されています。
+した。新たに追加された `java.util.function` パッケージに定義されています。
 
 汎用的な関数型インタフェースは、大きく分けて 4 種類あります:
 
- * Function&lt;T, R&gt; (T を受け、R を返す)
- * Consumer&lt;T&gt; (T を受け、戻り値なし)
- * Predicate&lt;T&gt; (T を受け、boolean を返す)
- * Supplier&lt;R&gt; (引数を受けず、R を返す)
+ * `Function<T, R>` (T を受け、R を返す)
+ * `Consumer<T>` (T を受け、戻り値なし)
+ * `Predicate<T>` (T を受け、boolean を返す)
+ * `Supplier<R>` (引数を受けず、R を返す)
 
 もう少し用途を特化させ、引数と戻り値の型が同じ関数型インタフェースとし
 て:
 
- * UnaryOperator&lt;T&gt; (T を受け、T を返す)
+ * `UnaryOperator<T>` (T を受け、T を返す)
 
 があります。
 
 さらにそれぞれのインタフェースにはいくつかのバリエーションがあり、
 引数を 2 つ受け付けるものが用意されています:
 
- * BiFunction&lt;T, U, R&gt; (T, U を受け、R を返す)
- * BiConsumer&lt;T, U&gt; (T, U を受け、戻り値なし)
- * BiPredicate&lt;T, U&gt; (T, U を受け、boolean を返す)
- * BinaryOperator&lt;T&gt; (T を 2 つ受け、T を返す)
+ * `BiFunction<T, U, R>` (T, U を受け、R を返す)
+ * `BiConsumer<T, U>` (T, U を受け、戻り値なし)
+ * `BiPredicate<T, U>` (T, U を受け、boolean を返す)
+ * `BinaryOperator<T>` (T を 2 つ受け、T を返す)
 
 さらにさらに、プリミティブ型に特化したバリエーションのインタフェースが
 用意されています。
 
- * IntFunction&lt;R&gt; (int を受け、R を返す)
- * IntConsumer (int を受け、戻り値なし)
- * IntPredicate (int を受け、boolean を返す)
- * IntSupplier (引数を受けず、int を返す)
- * IntUnaryOperator (int を受け、int を返す)
- * IntBinaryOperator (int を 2 つ受け、int を返す)
+ * `IntFunction<R>` (int を受け、R を返す)
+ * `IntConsumer` (int を受け、戻り値なし)
+ * `IntPredicate` (int を受け、boolean を返す)
+ * `IntSupplier` (引数を受けず、int を返す)
+ * `IntUnaryOperator` (int を受け、int を返す)
+ * `IntBinaryOperator` (int を 2 つ受け、int を返す)
 
 さらにさらにさらに、参照型からプリミティブ型に変換したり、参照型とプリ
 ミティブ型を同時に受けたりすることに特化したインタフェースも用意されて
 います:
 
- * ObjIntConsumer&lt;T&gt; (T と int を受け、戻り値なし)
- * ToIntFunction&lt;T&gt; (T を受け、int を返す)
- * ToIntBiFunction&lt;T, U&gt; (T と U を受け、int を返す)
+ * `ObjIntConsumer<T>` (T と int を受け、戻り値なし)
+ * `ToIntFunction<T>` (T を受け、int を返す)
+ * `ToIntBiFunction<T, U>` (T と U を受け、int を返す)
 
-こんなインタフェースが long, double, boolean (Supplier だけ) 向けにも
-用意されています。他のプリミティブ型については諦めたようです。
+こんなインタフェースが `long`, `double`, `boolean` (`Supplier` だけ) 向
+けにも用意されています。他のプリミティブ型については諦めたようです。
 
 
 ## Optional ##
 
-Java 8 では java.util.Optional というクラスが追加されました。Optional
-は null になりうる値をラップするクラスです。null になりうる箇所を
-Optional とすることで、null チェックの必要性を明示し、安全なプログラム
+Java 8 では `java.util.Optional` というクラスが追加されました。`Optional`
+は `null` になりうる値をラップするクラスです。`null` になりうる箇所を
+`Optional` とすることで、`null` チェックの必要性を明示し、安全なプログラム
 を書けるようにする仕組みです。
 
 foo から bar を get し、その bar から baz を get し、その baz から
@@ -436,7 +436,7 @@ value を get するプログラムを考えてみます。いずれも null に
 getter の戻り値それぞれに対して null チェックが必要ですので、大体こんな
 プログラムを書いていました。
 
-このプログラムを Optional を使って書きなおしてみます:
+このプログラムを `Optional` を使って書きなおしてみます:
 
     Optional<Foo> foo = Optional.ofNullable(getFoo());
     if (!foo.isPresent())
@@ -452,23 +452,23 @@ getter の戻り値それぞれに対して null チェックが必要ですの�
 
     return baz.getValue().orElse(null);
 
-各 getter の戻り値を Optional でラップすることで、それが null を取りう
-る値であるということを明示しています。値が null かどうかは
-Optinoal.isPresent で調べることが可能です。Optional にラップされている
-値は get で取得可能です。
+各 getter の戻り値を `Optional` でラップすることで、それが `null` を取り
+うる値であるということを明示しています。値が `null` かどうかは
+`Optinoal.isPresent` メソッドで調べることが可能です。`Optional` にラッ
+プされている値は `get` メソッドで取得可能です。
 
-Optional とラムダを組み合わせることで、より簡潔に書くことができます。
+`Optional` とラムダを組み合わせることで、より簡潔に書くことができます。
 
     return getFoo().map(foo -> foo.getBar())
                    .map(bar -> bar.getBaz())
                    .map(baz -> baz.getValue())
                    .orElse(null);
 
-Optional.map は Function インタフェースを受け付けます。Optional が値を
-保持していればその値を適用させ、null の場合はスルーします。null チェッ
-クの連鎖を map メソッドのチェインで表現しています。
+`Optional.map` メソッドは `Function` インタフェースを受け付けます。
+`Optional` が値を保持していればその値を適用させ、`null` の場合はスルーし
+ます。`null` チェックの連鎖を `map` メソッドのチェインで表現しています。
 
-Optional.map は次のように実装されています:
+`Optional.map` メソッドは次のように実装されています:
 
     public<U> Optional<U> map(Function<? super T, ? extends U> mapper) {
         Objects.requireNonNull(mapper);
@@ -479,13 +479,13 @@ Optional.map は次のように実装されています:
         }
     }
 
-なお、Optional 変数自体に null を代入することは依然として可能です:
+なお、`Optional` 変数自体に `null` を代入することは依然として可能です:
 
     Optional<String> s = null;
     s.isPresent();  // NullPointerException
 
 Java 言語の機能でこういった事態を回避することは今のところ不可能であり、
-null を代入することがないよう、プログラマが注意する必要があります。
+`null` を代入することがないよう、プログラマが注意する必要があります。
 
 
 ## Stream API ##
@@ -575,10 +575,10 @@ Java 7 以前のプログラムを Stream API を使って書きなおしてみ�
 
 元のコードで冗長だった (そしてなんとも Java っぽい) 「Map から List を
 get し null チェックして、null なら new して put する」部分は、
-Collectors.groupingBy の中に押し込められました。
+`Collectors.groupingBy` メソッドの中に押し込められました。
 
-Map.entrySet でループする箇所も、forEach を利用することで、長ったらしい
-Map.Entry の型宣言を省くことができます。
+`Map.entrySet` でループする箇所も、`forEach` を利用することで、長ったらしい
+`Map.Entry` の型宣言を省くことができます。
 
 何より、最初の箇条書きをそっくりそのままプログラムに落とし込んだような
 コードになっている点が素晴らしいですね。
@@ -610,15 +610,17 @@ Stream の操作は大きく中間操作と終端操作に分けられます。S
     After distinct: Monkey
     Before distinct: Dog
 
-となります。Before と After が交互に出力されており、distinct の前の
-peek に渡したラムダの実行が最後の forEach の実行まで遅延されていることが
-分かります。
+となります。Before と After が交互に出力されており、`distinct` の前の
+`peek` に渡したラムダの実行が最後の `forEach` の実行まで遅延されている
+ことが分かります。また、Before の出力に比べて After の出力が少ない (=
+`distinct` によって重複が省かれている) ことから、処理の順序が保たれている
+ことも分かります。
 
 
 ### 終端操作 ###
 
 終端操作は Stream をトラバースして結果や副作用を生成する操作です。
-Stream.forEach や IntStream.sum などが該当します。終端操作が完了すると
+`Stream.forEach` や `IntStream.sum` などが該当します。終端操作が完了すると
 Stream は消費済みとみなされ、以降は使用できなくなります。
 
     Stream<String> stream = Stream.of("hero", "dog", "monkey", "bird");
@@ -642,8 +644,8 @@ Stream は消費済みとみなされ、以降は使用できなくなります�
             at Tutor4.useTwice(Tutor4.java:219)
             at Tutor4.main(Tutor4.java:234)
 
-toUpperCase でマップして得た List は出力されていますが、その後
-toLowerCase でマップしようとしたところで例外が発生しています。
+`toUpperCase` でマップして得た `List` は出力されていますが、その後
+`toLowerCase` でマップしようとしたところで例外が発生しています。
 
 
 ### 独自の中間操作 ###
@@ -696,16 +698,17 @@ Stream にまとめる」という中間操作を考えてみます。
     4
     5
 
-zipWith で Stream のインスタンスを得るまでの流れを追うと:
+`zipWith` で Stream のインスタンスを得るまでの流れを追うと:
 
- 1. ソースの Stream から Iterator を得る
- 2. 1 をラップした Iterator を生成する
- 3. 2 の Iterator から Spliterator を生成する
- 4. 3 の Spliterator をソースとして Stream を生成する
+ 1. ソースの `Stream` から `Iterator` を得る
+ 2. 1 をラップした `Iterator` を生成する
+ 3. 2 の `Iterator` から `Spliterator` を生成する
+ 4. 3 の `Spliterator` をソースとして `Stream` を生成する
 
 という流れとなっています。この流れはもっとも基本的で単純な、Stream を構
-築するまでの流れです。Javadoc によれば、Spliterator の実装を工夫するこ
-とで、並列パフォーマンスの向上を狙うことができるようです。
+築するまでの流れです。Javadoc によれば、`Spliterator` の実装を工夫する
+(バランスの取れた分割、正確なサイズ情報の提供、効率的な残りデータ取得な
+ど) ことで、並列パフォーマンスの向上を狙うことができるようです。
 
 
 ## ラムダ式の実行 ##
@@ -768,11 +771,11 @@ zipWith で Stream のインスタンスを得るまでの流れを追うと:
            3: ireturn
     }
 
-ラムダ式は invokedynamic という命令にコンパイルされます。
+ラムダ式は `invokedynamic` という命令にコンパイルされます。
 
-ラムダ式内部の処理は、同クラスの lambda$main$0 というメソッドの中に展開
+ラムダ式内部の処理は、同クラスの `lambda$main$0` というメソッドの中に展開
 されています。ラムダ式が表す関数型インタフェースのオブジェクトに対する
-メソッド呼び出し (この例では applyAsInt) が、巡り巡って lambda$main$0
+メソッド呼び出し (この例では `applyAsInt`) が、巡り巡って `lambda$main$0`
 にたどり着きます。
 
 ラムダ式の実行における
@@ -780,12 +783,12 @@ zipWith で Stream のインスタンスを得るまでの流れを追うと:
  * ラムダ式から関数型インタフェースのオブジェクトを生成
  * インタフェースメソッドと実体メソッドの関連付け
 
-この invokedynamic 命令が行います。
+を、この `invokedynamic` 命令が行います。
 
 
 ### invokedynamic ###
 
-invokedynamic は Java 7 から追加された JVM の呼び出し命令です。Java 6
+`invokedynamic` は Java 7 から追加された JVM の呼び出し命令です。Java 6
 以前は 4 つの呼び出し命令がありました:
 
  * invokestatic: 静的メソッドの呼び出し
@@ -794,33 +797,33 @@ invokedynamic は Java 7 から追加された JVM の呼び出し命令です�
  * invokespecial: 上記以外のメソッド (コンストラクタ、private メソッドなど) の呼び出し命令
 
 これらの呼び出し命令はコンパイル時に呼び出し先のメソッドが決定されます
-が、invokedynamic は実行時に呼び出し先のメソッドを決定するという点が大
+が、`invokedynamic` は実行時に呼び出し先のメソッドを決定するという点が大
 きく異なります。
 
-invokedynamic によるメソッド呼び出しの流れは次の通りです:
+`invokedynamic` によるメソッド呼び出しの流れは次の通りです:
 
- 1. invokedynamic に関連付けられている bootstrap メソッドを呼び出す
- 2. bootstrap メソッドが CallSite オブジェクトを返す
- 3. CallSite から呼び出し先の MethodHandle を得る
- 4. MethodHandle を経由して、メソッドを呼び出す
+ 1. `invokedynamic` に関連付けられている bootstrap メソッドを呼び出す
+ 2. bootstrap メソッドが `CallSite` オブジェクトを返す
+ 3. `CallSite` から呼び出し先の `MethodHandle` を得る
+ 4. `MethodHandle` を通じて目的の処理を呼び出す
 
-bootstrap メソッドとは、invokedynamic に関連付けられる CallSite を構築
-する処理が実装された static メソッドです。すべての invokedynamic 命令は、
+bootstrap メソッドとは、`invokedynamic` に関連付けられる `CallSite` を構築
+する処理が実装された static メソッドです。すべての `invokedynamic` 命令は、
 それぞれ対応する bootstrap メソッドへの参照を持っています。bootstrap メ
-ソッドは CallSite の構築と、MethodHandle の初期値を CallSite に紐付けま
-す。bootstrap メソッドの呼び出しは、その invokedynamic 命令が初めて実行
+ソッドは `CallSite` の構築と、`MethodHandle` の初期値を `CallSite` に紐付けま
+す。bootstrap メソッドの呼び出しは、その `invokedynamic` 命令が初めて実行
 されるときにだけ行われます。
 
-CallSite が返す MethodHandle は、常に同じものでも構いませんし、毎回違う
+`CallSite` が返す `MethodHandle` は、常に同じものでも構いませんし、毎回違う
 ものでも構いません。このように呼び出し先のメソッドを動的に変えられる点が、
 他の 4 つの呼び出し命令と大きく異なります。
 
 
 ### ラムダ式の bootstrap メソッド - LambdaMetafactory.metafactory ###
 
-前述した通り、ラムダ式は invokedynamic 命令にコンパイルされます。ラムダ
-式の invokedynamic 命令には LambdaMetafactory クラスの metafactory メソッ
-ドが bootstrap メソッドとして関連付けられます。
+前述した通り、ラムダ式は `invokedynamic` 命令にコンパイルされます。ラム
+ダ式の `invokedynamic` 命令には `LambdaMetafactory` クラスの
+`metafactory` メソッドが bootstrap メソッドとして関連付けられます。
 
 UseLambda に -v オプションをつけて javap してみます:
 
@@ -939,22 +942,22 @@ UseLambda に -v オプションをつけて javap してみます:
           #23 invokestatic UseLambda.lambda$main$0:(I)I
           #22 (I)I
 
-がんばって追ってみれば、ラムダ式の invokedynamic 命令に
-LambdaMetafactory の metafactory メソッドに対する invokestatic が関連付
+がんばって追ってみれば、ラムダ式の `invokedynamic` 命令に
+`LambdaMetafactory` の `metafactory` メソッドに対する `invokestatic` が関連付
 けられていることが分かります。
 
-metafactory メソッド内では、
+`metafactory` メソッド内では、
 
  * ラムダ式の実体となるオブジェクトの生成戦略を決定
- * lambda$main$0 メソッドを呼び出すプロキシクラスの生成
- * プロキシクラスのオブジェクトを返す MethodHandle を生成
+ * 実体メソッドを呼び出すプロキシクラスの生成
+ * プロキシクラスのオブジェクトを返す `MethodHandle` を生成
 
 といったことを行います。
 
 このプロキシクラスのオブジェクトこそ、ラムダ式の実体となるオブジェクト
 です。プロキシクラスはラムダ式が表す関数型インタフェースを実装したクラ
-スであり、その実装メソッドからラムダ式の処理の実体 (lambda$main$0 メソッ
-ドなど) が呼び出されます。
+スであり、その実装メソッドからラムダ式の処理の実体 (`lambda$main$0`
+メソッドなど) が呼び出されます。
 
 少し追いかけてみます:
 
@@ -980,15 +983,15 @@ metafactory メソッド内では、
         ...
     }
 
-InnerClassLambdaMetafactory の buildCallSite メソッドの戻り値を返してい
+`InnerClassLambdaMetafactory` の `buildCallSite` メソッドの戻り値を返してい
 ます。
 
-invokedType は CallSite が返す MethodHandle に期待されるシグネチャを表し
+`invokedType` は `CallSite` が返す `MethodHandle` に期待されるシグネチャを表し
 ます。これはラムダ式が実装する関数型インタフェースのシグネチャ**ではなく**、
 ラムダ式によって表現されるオブジェクトを得るために呼び出されるメソッドの
 シグネチャです。
 
-InnerClassLambdaMetafactory を追ってみます。
+`InnerClassLambdaMetafactory` クラスの `buildCallSite` メソッドを追ってみます。
 
     /* package */ final class InnerClassLambdaMetafactory extends AbstractValidatingLambdaMetafactory {
         ...
@@ -1040,12 +1043,12 @@ InnerClassLambdaMetafactory を追ってみます。
         ...
     }
 
-spinInnerClass メソッドの呼び出しにより、プロキシクラスを呼び出し元の内
+`spinInnerClass` メソッドの呼び出しにより、プロキシクラスを呼び出し元の内
 部クラスとして生成しています。
 
-invokedType によって表現されるメソッドシグネチャのパラメータ数により、
-生成する CallSite とその初期値となる MethodHandle を切り替えています。
-invokedType によって表現されるメソッドの引数は、ラムダ式がキャプチャす
+`invokedType` によって表現されるメソッドシグネチャのパラメータ数により、
+生成する `CallSite` とその初期値となる `MethodHandle` を切り替えています。
+`invokedType` によって表現されるメソッドの引数は、ラムダ式がキャプチャす
 る変数、すなわちラムダ式の内部からアクセスされる外側の変数です。
 
     void method() {
@@ -1058,20 +1061,20 @@ invokedType によって表現されるメソッドの引数は、ラムダ式�
 りません。(2) のラムダ式は、式の外部で定義された変数 y を用いており、y
 を式内にキャプチャしているといえます。
 
-(1) のようなラムダ式であれば invokedType のパラメータ数は 0 となり、
-(2) のようなラムダ式であれば invokedType のパラメータ数は 1 となります。
+(1) のようなラムダ式であれば `invokedType` のパラメータ数は 0 となり、
+(2) のようなラムダ式であれば `invokedType` のパラメータ数は 1 となります。
 
-まず、キャプチャする変数がない場合に生成している CallSite を見てみます:
+まず、キャプチャする変数がない場合に生成している `CallSite` を見てみます:
 
     Object inst = ctrs[0].newInstance();
     return new ConstantCallSite(MethodHandles.constant(samBase, inst));
 
-ここで生成している CallSite が持つメソッドハンドルは、
-MethodHandles.constant が返すメソッドハンドルです。
-MethodHandles.constant は、オブジェクトとその型を引数に取り、そのオブジェ
+ここで生成している `CallSite` が持つメソッドハンドルは、
+`MethodHandles.constant` が返すメソッドハンドルです。
+`MethodHandles.constant` は、オブジェクトとその型を引数に取り、そのオブジェ
 クトをそっくりそのまま返すメソッドハンドルを返すファクトリメソッドです。
-つまりこの CallSite から返される MethodHandle を呼び出すと、 samBase 型
-であるオブジェクト inst が返ってきます。
+つまりこの `CallSite` から返される `MethodHandle` を呼び出すと、`samBase` 型
+であるオブジェクト `inst` が返ってきます。
 
 次にキャプチャする変数がある場合に生成している CallSite を見てみます:
 
@@ -1082,26 +1085,26 @@ MethodHandles.constant は、オブジェクトとその型を引数に取り、
             MethodHandles.Lookup.IMPL_LOOKUP
                  .findStatic(innerClass, NAME_FACTORY, invokedType));
 
-ここで生成している CallSite が持つメソッドハンドルは、innerClass のクラ
-スメソッドである get$Lambda への参照です。そのシグネチャはinvokedType
+ここで生成している `CallSite` が持つメソッドハンドルは、`innerClass` のクラ
+スメソッドである `get$Lambda` への参照です。そのシグネチャは `invokedType`
 で表現されるシグネチャ、つまりキャプチャする変数を引数に取り、プロキシ
 クラスのインスタンスを返すメソッドです。
 
-いずれも場合であっても CallSite が返すメソッドハンドルを呼び出すと、プ
-ロキシクラスのインスタンスが返ってきます。ただしそのオブジェクトの生成
-戦略はラムダ式内に変数をキャプチャするかどうかで切り替わり、変数をキャ
-プチャする必要がなければ、あらかじめインスタンス化されたオブジェクトが、
-変数をキャプチャする必要があれば呼び出しのたびに新しいオブジェクトが生
-成されます。
+いずれも場合も `CallSite` が返すメソッドハンドルを呼び出すと、プロキシ
+クラスのインスタンスが返ってきます。ただしそのオブジェクトの生成戦略は
+ラムダ式内に変数をキャプチャするかどうかで切り替わり、変数をキャプチャ
+する必要がなければ、あらかじめインスタンス化されたオブジェクトが、変数
+をキャプチャする必要があれば呼び出しのたびに新しいオブジェクトが生成さ
+れます。
 
 つまり、ラムダ式によって表現される関数型インタフェースのオブジェクトの
-実体は、metafactory メソッド内で実行時に生成されるプロキシクラスのイン
+実体は、`metafactory` メソッド内で実行時に生成されるプロキシクラスのイン
 スタンスであると言えます。
 
 ラムダ式によるオブジェクトの生成戦略をまとめると:
 
  * キャプチャする変数がある場合
-    * ラムダ式を通るたび、毎回インスタンスを生成する
+    * ラムダ式を通るたび、インスタンスを生成する
  * キャプチャする変数がない場合
     * はじめてラムダ式を通るときに、一度だけインスタンスを生成する
 
@@ -1110,14 +1113,15 @@ MethodHandles.constant は、オブジェクトとその型を引数に取り、
 
 ### プロキシクラス ###
 
-ラムダ式の invokedynamic 命令には LambdaMetafactory の metafactory メソッ
-ドが bootstrap メソッドとして関連付けられます。metafactory メソッドでは、
-ラムダ式に対応するプロキシクラスが生成されます。ラムダ式により表現され
-る関数型インタフェースのオブジェクトの実体は、このプロキシクラスのイン
-スタンスとなります。
+ラムダ式の `invokedynamic` 命令には `LambdaMetafactory` の
+`metafactory` メソッドが bootstrap メソッドとして関連付けられます。
+`metafactory` メソッドでは、ラムダ式に対応するプロキシクラスが生成され
+ます。ラムダ式により表現される関数型インタフェースのオブジェクトの実体
+は、このプロキシクラスのインスタンスとなります。
 
-実際どのようなプロキシクラスが生成されているのか、確認することができま
-す。
+実行時に生成され、通常はクラスファイルとしても出力されないこのプロキシ
+クラスですが、実際どのようなプロキシクラスが生成されているのか、デバッ
+グ用のオプションを使うことで確認することができます。
 
     $ cat UseLambda.java
     import java.util.function.*;
@@ -1184,21 +1188,22 @@ MethodHandles.constant は、オブジェクトとその型を引数に取り、
            8: ireturn
     }
 
-システムプロパティ jdk.internal.lambda.dumpProxyClasses にフォルダ名を
+システムプロパティ `jdk.internal.lambda.dumpProxyClasses` にフォルダ名を
 指定して実行すると、実行時に生成するプロキシクラスをフォルダ内にダンプ
 するようになっています。
 
-x -> x + 1 に対応するプロキシクラスが UseLambda$$Lambda$1 クラスで、x
--> x + y に対応するプロキシクラスが UseLambda$$Lambda$2 クラスです。
+`x -> x + 1` に対応するプロキシクラスが `UseLambda$$Lambda$1` クラスで、
+`x -> x + y` に対応するプロキシクラスが `UseLambda$$Lambda$2` クラスで
+す。
 
-キャプチャする変数がない UseLambda$$Lambda$1 には get$Lambda メソッドが
+キャプチャする変数がない `UseLambda$$Lambda$1` には `get$Lambda` メソッドが
 ないことを確認できます。同クラスはラムダ式の関数型インタフェースである
-IntUnaryOperator を実装し、applyAsInt メソッドでは
-UseLambda.lambda$main$0 を呼び出していることが分かります。
+`IntUnaryOperator` を実装し、`applyAsInt` メソッドでは
+`UseLambda.lambda$main$0` を呼び出していることが分かります。
 
-キャプチャする変数がある UseLambda$$Lambda$2 には get$Lambda メソッドが
-あることを確認できます。ラムダ式では、外部で定義されている int 変数 y
-をキャプチャしているので、get$Lambda メソッドの引数として int を 1 つ受
-けています。get$Lambda メソッドでは UseLambda$$Lambda$2 を new していま
-す。キャプチャする変数を保持しておくためのインスタンスフィールド arg$1
+キャプチャする変数がある `UseLambda$$Lambda$2` には `get$Lambda` メソッドが
+あることを確認できます。ラムダ式では、外部で定義されている int 変数 `y`
+をキャプチャしているので、`get$Lambda` メソッドの引数として int を 1 つ受
+けています。`get$Lambda` メソッドでは `UseLambda$$Lambda$2` を `new` していま
+す。キャプチャする変数を保持しておくためのインスタンスフィールド `arg$1`
 も確認できます。
