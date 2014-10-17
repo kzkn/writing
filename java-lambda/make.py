@@ -3,6 +3,7 @@
 
 import markdown
 import StringIO
+from BeautifulSoup import BeautifulSoup
 
 template = """
 <!DOCTYPE html>
@@ -21,6 +22,15 @@ template = """
 buf = StringIO.StringIO()
 try:
     markdown.markdownFromFile('text.md', buf)
+
+    soup = BeautifulSoup(buf.getvalue())
+    buf.truncate(0)
+    for tag in soup.findAll(recursive=False):
+        if tag.name == 'p':
+            print >>buf, str(tag).replace('\n', '')
+        else:
+            print >>buf, tag
+
     with open('text.html', 'w') as f:
         f.write(template % buf.getvalue())
 finally:
