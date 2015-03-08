@@ -7,25 +7,27 @@ Date and Time API、高速JavaScriptエンジン、JavaFX 8 などなど。。�
 今回はこの中のラムダ式と Stream API を取り上げます。
 
 
-## ラムダに関連する文法拡張 ##
+## ラムダに関連する構文拡張 ##
 
-Java 8 では Java 言語に対していくつかの文法拡張がなされました。ここでは
-ラムダに関連する文法拡張について見ていきます。
+Java 8 では Java 言語に対していくつかの構文拡張がなされました。ここでは
+ラムダに関連する構文拡張について見ていきます。
 
 ### ラムダ記法 ###
 
 Java 言語でラムダ式を書けるようになりました。新たに次のような式が書ける
 ようになりました。
 
-    :::java
-    (int x) -> { x + 1 }
+```java
+(int x) -> { x + 1 }
+```
 
 引数 x に 1 を足すという処理を表したラムダ式です。
 
-    :::text
-    (int x) -> { x + 1 }
-    ^^^^^^^    ^^^^^^^^^
-    引数部      処理本体
+```text
+(int x) -> { x + 1 }
+^^^^^^^    ^^^^^^^^^
+引数部      処理本体
+```
 
 ラムダ式は引数部と処理本体に分かれており、それらを -> で繋ぐという構文
 です。引数の数や処理本体の文の数に応じていくつかの略記が可能となってい
@@ -34,10 +36,10 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 
 ### 関数型インタフェース ###
 
-文法の拡張というわけではなく、概念として追加されています。抽象メソッド
-をひとつだけ持つインタフェースを、関数型インタフェースと呼びます。イン
-タフェースの定義に `FunctionalInterface` アノテーションを付加することで、
-関数型インタフェースであることを明示できるようになっています。
+概念として追加されています。抽象メソッドをひとつだけ持つインタフェースを、
+関数型インタフェースと呼びます。インタフェースの定義に
+`FunctionalInterface` アノテーションを付加することで、関数型インタフェー
+スであることを明示できるようになっています。
 
 ラムダ式と後述するメソッド参照は、すべて関数型インタフェースの変数とし
 て利用できます。
@@ -48,12 +50,13 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 関数型インタフェースの変数に、メソッドそのものを代入することができるよ
 うになりました。
 
-    :::java
-    private void onSubmitButtonActionPerformed(ActionEvent e) {
-        ...
-    }
+```java
+private void onSubmitButtonActionPerformed(ActionEvent e) {
+    ...
+}
+```
 
-    submitButton.addActionListener(this::onSubmitButtonActionPerformed);
+submitButton.addActionListener(this::onSubmitButtonActionPerformed);
 
 厳密には「メソッドそのもの」ではなく「メソッドを呼び出すラムダ式」を表
 現するのが、メソッド参照です。
@@ -69,7 +72,7 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
  * コンストラクタ
     * クラス名::new
 
-という文法です。
+という構文です。
 
 インスタンスメソッドへのメソッド参照を表す「クラス名::メソッド名」につ
 いては、同じ名前のクラスメソッド (例: `Integer::toString`) がある場合、あ
@@ -84,8 +87,8 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 というシグネチャを持つ関数型インタフェースに適合します。例えば `Object`
 クラスの `equals` メソッドなら、
 
-    :::java
-    BiFunction<Object, Object, Boolean> fn = Object::equals;
+```java
+BiFunction<Object, Object, Boolean> fn = Object::equals;
 
 といった具合で、レシーバーの `Object` と比較対象の `Object` を引数にとり
 `Boolean` を返す関数型インタフェースの変数になります。
@@ -93,78 +96,79 @@ Java 言語でラムダ式を書けるようになりました。新たに次の
 
 ### デフォルトメソッド ###
 
-interface にメソッドのデフォルト実装を定義できるようになりました。`List`
-や `Map` など、既存 API で定義されていた interface にラムダを利用したメソッ
+インタフェースにメソッドのデフォルト実装を定義できるようになりました。`List`
+や `Map` など、既存 API で定義されていたインタフェースにラムダを利用したメソッ
 ドを追加しつつ、アプリケーションプログラムのコンパイルエラーを回避する
 ためです。
 
 この言語拡張を利用して `List` や `Map` といった既存のインタフェースにラムダ
 を用いたメソッドが追加されています。
 
-    :::java
-    public interface List<E> extends Collection<E> {
-        ...
+```java
+public interface List<E> extends Collection<E> {
+    ...
 
-        default void replaceAll(UnaryOperator<E> operator) {
-            Objects.requireNonNull(operator);
-            final ListIterator<E> li = this.listIterator();
-            while (li.hasNext()) {
-                li.set(operator.apply(li.next()));
-            }
+    default void replaceAll(UnaryOperator<E> operator) {
+        Objects.requireNonNull(operator);
+        final ListIterator<E> li = this.listIterator();
+        while (li.hasNext()) {
+            li.set(operator.apply(li.next()));
         }
-
-        ...
     }
 
-複数の interface を実装して、メソッド名が衝突した場合のコンパイル結果を
+    ...
+}
+```
+
+複数のインタフェースを実装して、メソッド名が衝突した場合のコンパイル結果を
 まとめました。
 
 <table>
   <thead>
-    <tr>
-      <th>#</th>
-      <th>インタフェース1</th>
-      <th>インタフェース2</th>
-      <th>実装クラス</th>
-      <th>結果</th>
-    </tr>
+<tr>
+  <th>#</th>
+  <th>インタフェース1</th>
+  <th>インタフェース2</th>
+  <th>実装クラス</th>
+  <th>結果</th>
+</tr>
   </thead>
   <tbody>
-    <tr>
-      <td>1</td>
-      <td>非デフォルトメソッド method1 を定義</td>
-      <td>非デフォルトメソッド method1 を定義</td>
-      <td>method1 を実装</td>
-      <td>コンパイル可能 (Java 7 以前と同様)</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>デフォルトメソッド method1 を定義</td>
-      <td>非デフォルトメソッド method1 を定義</td>
-      <td>method1 を実装</td>
-      <td>コンパイル可能</td>
-    </tr>
-    <tr>
-      <td>3</td>
-      <td>デフォルトメソッド method1 を定義</td>
-      <td>非デフォルトメソッド method1 を定義</td>
-      <td>method1 を実装しない</td>
-      <td>インタフェース2の method1 が実装されていないものとしてコンパイルエラー</td>
-    </tr>
-    <tr>
-      <td>4</td>
-      <td>デフォルトメソッド method1 を定義</td>
-      <td>デフォルトメソッド method1 を定義</td>
-      <td>method1 を実装しない</td>
-      <td>2つのインタフェースから関連しないデフォルトメソッドを継承しているとしてコンパイルエラー</td>
-    </tr>
-    <tr>
-      <td>5</td>
-      <td>デフォルトメソッド method1 を定義</td>
-      <td>デフォルトメソッド method1 を定義</td>
-      <td>method1 を実装</td>
-      <td>コンパイル可能</td>
-    </tr>
+<tr>
+  <td>1</td>
+  <td>非デフォルトメソッド method1 を定義</td>
+  <td>非デフォルトメソッド method1 を定義</td>
+  <td>method1 を実装</td>
+  <td>コンパイル可能 (Java 7 以前と同様)</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>デフォルトメソッド method1 を定義</td>
+  <td>非デフォルトメソッド method1 を定義</td>
+  <td>method1 を実装</td>
+  <td>コンパイル可能</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>デフォルトメソッド method1 を定義</td>
+  <td>非デフォルトメソッド method1 を定義</td>
+  <td>method1 を実装しない</td>
+  <td>インタフェース2の method1 が実装されていないものとしてコンパイルエラー</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>デフォルトメソッド method1 を定義</td>
+  <td>デフォルトメソッド method1 を定義</td>
+  <td>method1 を実装しない</td>
+  <td>2つのインタフェースから関連しないデフォルトメソッドを継承しているとしてコンパイルエラー</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>デフォルトメソッド method1 を定義</td>
+  <td>デフォルトメソッド method1 を定義</td>
+  <td>method1 を実装</td>
+  <td>コンパイル可能</td>
+</tr>
   </tbody>
 </table>
 
@@ -172,56 +176,59 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 方のデフォルトメソッドの実装を利用したい場合には、`super` キーワードを利
 用することでコンパイルエラーを回避できます。
 
-    :::java
-    public static interface IF1 {
-        public default int method(int x) { return x + 1; }
+```java
+public static interface IF1 {
+    public default int method(int x) { return x + 1; }
+}
+
+public static interface IF2 {
+    public default int method(int y) { return y + 2; }
+}
+
+public void useDefaultMethod() {
+    class Impl implements IF1, IF2 {
+        public int method(int y) { return IF2.super.method(y); }
     }
 
-    public static interface IF2 {
-        public default int method(int y) { return y + 2; }
-    }
+    System.out.println("impl.method(1): " + new Impl().method(1));  // 3
+}
+```
 
-    public void useDefaultMethod() {
-        class Impl implements IF1, IF2 {
-            public int method(int y) { return IF2.super.method(y); }
-        }
-
-        System.out.println("impl.method(1): " + new Impl().method(1));  // 3
-    }
-
-デフォルトメソッドの定義は interface のクラスファイル内に展開されるよう
+デフォルトメソッドの定義はインタフェースのクラスファイル内に展開されるよう
 です。
 
-    :::text
-    $ javap -p -c Tutor4\$IF2
-    Compiled from "Tutor4.java"
-    public interface Tutor4$IF2 {
-      public int method(int);
-        Code:
-           0: iload_1
-           1: iconst_2
-           2: iadd
-           3: ireturn
+```text
+$ javap -p -c Tutor4\$IF2
+Compiled from "Tutor4.java"
+public interface Tutor4$IF2 {
+  public int method(int);
+    Code:
+       0: iload_1
+       1: iconst_2
+       2: iadd
+       3: ireturn
+}
+```
+
+ラムダには直接関係ありませんが、インタフェースに対するもうひとつの拡張とし
+て、インタフェースにクラスメソッドを定義できるようになりました。
+
+```java
+@FunctionalInterface
+public interface Comparator<T> {
+    ...
+
+    public static <T, U extends Comparable<? super U>> Comparator<T> comparing(
+            Function<? super T, ? extends U> keyExtractor)
+    {
+        Objects.requireNonNull(keyExtractor);
+        return (Comparator<T> & Serializable)
+            (c1, c2) -> keyExtractor.apply(c1).compareTo(keyExtractor.apply(c2));
     }
 
-ラムダには直接関係ありませんが、interface に対するもうひとつの拡張とし
-て、interface にクラスメソッドを定義できるようになりました。
-
-    :::java
-    @FunctionalInterface
-    public interface Comparator<T> {
-        ...
-
-        public static <T, U extends Comparable<? super U>> Comparator<T> comparing(
-                Function<? super T, ? extends U> keyExtractor)
-        {
-            Objects.requireNonNull(keyExtractor);
-            return (Comparator<T> & Serializable)
-                (c1, c2) -> keyExtractor.apply(c1).compareTo(keyExtractor.apply(c2));
-        }
-
-        ...
-    }
+    ...
+}
+```
 
 
 ## ラムダの基本 ##
@@ -231,13 +238,14 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 ラムダが追加される前、すなわち Java 7 以前では、いわゆるラムダ的なこと
 を表現する際には無名内部クラスという機能を使っていました:
 
-    :::java
-    button.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            System.out.println("on button clicked!");
-        }
-    });
+```java
+button.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        System.out.println("on button clicked!");
+    }
+});
+```
 
 入力の負担は IDE の自動補完によって軽減されたりもしますが、やりたいこと
 に対するコード量が増える傾向にあり、他のプログラミング言語に比べるとど
@@ -245,24 +253,27 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 
 上の例をラムダ式を使って書きなおしてみます:
 
-    :::java
-    button.addActionListener((ActionEvent e) -> {
-        System.out.println("on button clicked");
-    });
+```java
+button.addActionListener((ActionEvent e) -> {
+    System.out.println("on button clicked");
+});
+```
 
 もう少し削ってみます。
 
-    :::java
-    button.addActionListener(e -> {
-        System.out.println("on button clicked");
-    });
+```java
+button.addActionListener(e -> {
+    System.out.println("on button clicked");
+});
+```
 
 仮引数の型 (例では `ActionEvent`) はコンパイラが推論してくれるようになっ
 ているので、ほとんどの場合は省略可能です。また、今回の例ではラムダの引
 数は 1 つなので、仮引数部分のカッコも省略可能です。
 
-    :::java
-    button.addActionListener(e -> System.out.println("on button clicked"));
+```java
+button.addActionListener(e -> System.out.println("on button clicked"));
+```
 
 ラムダ式内部の処理が 1 文の場合、ブレースとセミコロンも省略可能です。
 
@@ -281,36 +292,39 @@ interface にメソッドのデフォルト実装を定義できるようにな�
 ボタンを押下したときの処理をメソッド化している場合を考えてみます。
 Java 7 以前ではやはり無名内部クラスを利用する必要があり:
 
-    :::java
-    button.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            onButtonActionPerformed(e);
-        }
-    });
-
-    private void onButtonActionPerformed(ActionEvent e) {
-       System.out.println("on button clicked");
+```java
+button.addActionListener(new ActionListener() {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        onButtonActionPerformed(e);
     }
+});
+
+private void onButtonActionPerformed(ActionEvent e) {
+   System.out.println("on button clicked");
+}
+```
 
 というコードを書く必要がありました。
 Java 8 以降では、もちろんラムダ式を使うこともできますが:
 
-    :::java
-    button.addActionListener(e -> onButtonActionPerformed(e));
+```java
+button.addActionListener(e -> onButtonActionPerformed(e));
 
-    private void onButtonActionPerformed(ActionEvent e) {
-        System.out.println("on button clicked");
-    }
+private void onButtonActionPerformed(ActionEvent e) {
+    System.out.println("on button clicked");
+}
+```
 
 メソッド参照を使うことで次のような書き方も可能です:
 
-    :::java
-    button.addActionListener(this::onButtonActionPerformed);
+```java
+button.addActionListener(this::onButtonActionPerformed);
 
-    private void onButtonActionPerformed(ActionEvent e) {
-        System.out.println("on button clicked");
-    }
+private void onButtonActionPerformed(ActionEvent e) {
+    System.out.println("on button clicked");
+}
+```
 
 
 ### ラムダ式の型 - 関数型インタフェース ###
@@ -326,42 +340,44 @@ Java 言語におけるラムダ式とは何か？その答えは「関数型イ
 コード中に現れるラムダ式が、どの関数型インタフェースの型を持つオブジェ
 クトとして解釈されるかは、文脈に応じて変わります。
 
-    :::java
-    // このアノテーションをつけることで、関数型インタフェースであることを
-    // 明示できます。メソッドを追加したりすることでインタフェースが関数型
-    // インタフェースの条件を満たさなくなると、コンパイルエラーが出ます。
-    @FunctionalInterface
-    public interface IntFunc<T> {
-        public T apply(int n);
-    }
+```java
+// このアノテーションをつけることで、関数型インタフェースであることを
+// 明示できます。メソッドを追加したりすることでインタフェースが関数型
+// インタフェースの条件を満たさなくなると、コンパイルエラーが出ます。
+@FunctionalInterface
+public interface IntFunc<T> {
+    public T apply(int n);
+}
 
-    @FunctionalInterface
-    public interface IntOp {
-        public int apply(int n);
-    }
+@FunctionalInterface
+public interface IntOp {
+    public int apply(int n);
+}
 
-    public static <T> T method1(IntFunc<T> fn, int x) {
-        return fn.apply(x);
-    }
+public static <T> T method1(IntFunc<T> fn, int x) {
+    return fn.apply(x);
+}
 
-    public static int method2(IntOp op, int x) {
-        return op.apply(x);
-    }
+public static int method2(IntOp op, int x) {
+    return op.apply(x);
+}
 
-    int x = 1;
-    method1(n -> n + 1, x);  // 1
-    method2(n -> n + 1, x);  // 2
+int x = 1;
+method1(n -> n + 1, x);  // (1)
+method2(n -> n + 1, x);  // (2)
+```
 
-1, 2 で記述しているラムダ式は同じ字面ですが、全くの別物です。前者は
+(1), (2) で記述しているラムダ式は同じ字面ですが、全くの別物です。前者は
 IntFunc インタフェースの、後者は IntOp インタフェースの型を持つオブジェ
 クトとして解釈されます。
 
 ラムダ式はあくまでも関数型インタフェースを型に持つオブジェクトなので、
 他の型のオブジェクトと同様に変数に持つことができます:
 
-    :::java
-    IntFunc<Integer> fn1 = n -> n + 1;
-    IntOp fn2 = n -> n + 1;
+```java
+IntFunc<Integer> fn1 = n -> n + 1;
+IntOp fn2 = n -> n + 1;
+```
 
 ラムダ式をどの型を持つオブジェクトとして解釈するかは、変数の型によって
 決められます。
@@ -370,9 +386,10 @@ IntFunc インタフェースの、後者は IntOp インタフェースの型�
 出しに過ぎません。リフレクションによるメソッド呼び出し (`Method.invoke`)
 のような無駄なオーバーヘッドはありません。
 
-    :::java
-    fn1.apply(1);
-    fn2.apply(2);
+```java
+fn1.apply(1);
+fn2.apply(2);
+```
 
 
 ### 汎用的な関数型インタフェース - java.util.function ###
@@ -437,40 +454,42 @@ foo から bar を get し、その bar から baz を get し、その baz か�
 value を get するプログラムを考えてみます。いずれも null になりうる可能
 性があるものとします。
 
-    :::java
-    Foo foo = getFoo();
-    if (foo == null)
-        return null;
+```java
+Foo foo = getFoo();
+if (foo == null)
+    return null;
 
-    Bar bar = foo.getBar();
-    if (bar == null)
-        return null;
+Bar bar = foo.getBar();
+if (bar == null)
+    return null;
 
-    Baz baz = bar.getBaz();
-    if (baz == null)
-        return null;
+Baz baz = bar.getBaz();
+if (baz == null)
+    return null;
 
-    return baz.getValue();
+return baz.getValue();
+```
 
 getter の戻り値それぞれに対して null チェックが必要ですので、大体こんな
 プログラムを書いていました。
 
 このプログラムを `Optional` を使って書きなおしてみます:
 
-    :::java
-    Optional<Foo> foo = Optional.ofNullable(getFoo());
-    if (!foo.isPresent())
-        return null;
+```java
+Optional<Foo> foo = Optional.ofNullable(getFoo());
+if (!foo.isPresent())
+    return null;
 
-    Optional<Bar> bar = Optional.ofNullable(foo.get().getBar());
-    if (!bar.isPresent())
-        return null;
+Optional<Bar> bar = Optional.ofNullable(foo.get().getBar());
+if (!bar.isPresent())
+    return null;
 
-    Optional<Baz> baz = Optional.ofNullable(bar.get().getBaz());
-    if (!baz.isPresent())
-        return null;
+Optional<Baz> baz = Optional.ofNullable(bar.get().getBaz());
+if (!baz.isPresent())
+    return null;
 
-    return baz.getValue().orElse(null);
+return baz.get().getValue();
+```
 
 各 getter の戻り値を `Optional` でラップすることで、それが `null` を取り
 うる値であるということを明示しています。値が `null` かどうかは
@@ -479,11 +498,12 @@ getter の戻り値それぞれに対して null チェックが必要ですの�
 
 `Optional` とラムダを組み合わせることで、より簡潔に書くことができます。
 
-    :::java
-    return getFoo().map(foo -> foo.getBar())
-                   .map(bar -> bar.getBaz())
-                   .map(baz -> baz.getValue())
-                   .orElse(null);
+```java
+return getFoo().map(foo -> foo.getBar())
+               .map(bar -> bar.getBaz())
+               .map(baz -> baz.getValue())
+               .orElse(null);
+```
 
 `Optional.map` メソッドは `Function` インタフェースを受け付けます。
 `Optional` が値を保持していればその値を適用させ、`null` の場合はスルーし
@@ -491,21 +511,23 @@ getter の戻り値それぞれに対して null チェックが必要ですの�
 
 `Optional.map` メソッドは次のように実装されています:
 
-    :::java
-    public<U> Optional<U> map(Function<? super T, ? extends U> mapper) {
-        Objects.requireNonNull(mapper);
-        if (!isPresent())
-            return empty();
-        else {
-            return Optional.ofNullable(mapper.apply(value));
-        }
+```java
+public<U> Optional<U> map(Function<? super T, ? extends U> mapper) {
+    Objects.requireNonNull(mapper);
+    if (!isPresent())
+        return empty();
+    else {
+        return Optional.ofNullable(mapper.apply(value));
     }
+}
+```
 
 なお、`Optional` 変数自体に `null` を代入することは依然として可能です:
 
-    :::java
-    Optional<String> s = null;
-    s.isPresent();  // NullPointerException
+```java
+Optional<String> s = null;
+s.isPresent();  // NullPointerException
+```
 
 Java 言語の機能でこういった事態を回避することは今のところ不可能であり、
 `null` を代入することがないよう、プログラマが注意する必要があります。
@@ -516,21 +538,23 @@ Java 言語の機能でこういった事態を回避することは今のとこ
 ラムダのよくある用法として、リストに対する操作を、制御構文を使わず簡潔
 に書けるというものがあります。例えば Java のこんなコードが:
 
-    :::java
-    int sum = 0;
-    for (Widget w : widgets) {
-        if (w.getColor() == RED) {
-            sum += w.getWeight();
-        }
+```java
+int sum = 0;
+for (Widget w : widgets) {
+    if (w.getColor() == RED) {
+        sum += w.getWeight();
     }
+}
+```
 
 Common Lisp ではこんな風に書けます:
 
-    :::common-lisp
-    (reduce (lambda (sum w) (+ sum (get-weight w)))
-            (remove-if-not (lambda (w) (= (get-color w) RED))
-                           widgets)
-            :initial-value 0)
+```common-lisp
+(reduce (lambda (sum w) (+ sum (get-weight w)))
+        (remove-if-not (lambda (w) (= (get-color w) RED))
+                       widgets)
+        :initial-value 0)
+```
 
 といった具合のものです。当然 Java でもラムダを使うことで、この程度のラ
 ムダ式の応用は可能になりました。
@@ -546,10 +570,11 @@ Common Lisp ではこんな風に書けます:
 
 Lisp のプログラムを Java のラムダと Stream を使って翻訳すると:
 
-    :::java
-    widgets.stream()
-           .filter(w -> w.getColor() == RED)
-           .collect(Collectors.summingInt(w -> w.getWeight()));
+```java
+widgets.stream()
+       .filter(w -> w.getColor() == RED)
+       .collect(Collectors.summingInt(w -> w.getWeight()));
+```
 
 といった具合になります。
 
@@ -565,39 +590,41 @@ Java 7 以前のプログラムを Stream API を使って書きなおしてみ�
 
 というプログラムを考えてみます。
 
-    :::java
-    List<Employee> employees = getEmployees();
-    Map<Department, List<Employee>> dep2emps = new HashMap<>();
+```java
+List<Employee> employees = getEmployees();
+Map<Department, List<Employee>> dep2emps = new HashMap<>();
 
-    for (Employees emp : employees) {
-        if (!emp.isJoinedBefore(2000)) {
-            continue;
-        }
-
-        List<Employee> emps = dep2emps.get(emp.getDepartment());
-        if (emps == null) {
-            emps = new ArrayList<>();
-            dep2emps.put(emp.getDepartment(), emps);
-        }
-        emps.add(emp);
+for (Employees emp : employees) {
+    if (!emp.isJoinedBefore(2000)) {
+        continue;
     }
 
-    for (Map.Entry<Department, List<Employee>> e : dep2emps.entrySet()) {
-        Department dep = e.getKey();
-        List<Employee> emps = e.getValue();
-        dep.getManager().rating(emps);
+    List<Employee> emps = dep2emps.get(emp.getDepartment());
+    if (emps == null) {
+        emps = new ArrayList<>();
+        dep2emps.put(emp.getDepartment(), emps);
     }
+    emps.add(emp);
+}
+
+for (Map.Entry<Department, List<Employee>> e : dep2emps.entrySet()) {
+    Department dep = e.getKey();
+    List<Employee> emps = e.getValue();
+    dep.getManager().rating(emps);
+}
+```
 
 なんだかよく見る構成のプログラムです。
 
 これを Stream API を使って書きなおしてみます:
 
-    :::java
-    List<Employee> employees = getEmployees();
-    employees.stream()
-             .filter(e -> e.isJoinedBefore(2000))
-             .collect(Collectors.groupingBy(Employee::getDepartment))
-             .forEach((dep, emps) -> dep.getManager().rating(emps));
+```java
+List<Employee> employees = getEmployees();
+employees.stream()
+         .filter(e -> e.isJoinedBefore(2000))
+         .collect(Collectors.groupingBy(Employee::getDepartment))
+         .forEach((dep, emps) -> dep.getManager().rating(emps));
+```
 
 スッキリしました。
 
@@ -622,23 +649,25 @@ Stream の操作は大きく中間操作と終端操作に分けられます。S
 呼び出しても、即座に値のマッピングが行われることはなく、その後に続く終
 端操作によって Stream をトラバースする際にマッピングが行われます。
 
-    :::java
-    Stream.of("Dog", "Cat", "Dog", "Monkey", "Dog");
-          .peek(s -> System.out.println("Before distinct: " + s))  // 中間操作
-          .distinct()
-          .forEach(s -> System.out.println("After distinct: " + s));  // 終端操作
+```java
+Stream.of("Dog", "Cat", "Dog", "Monkey", "Dog");
+      .peek(s -> System.out.println("Before distinct: " + s))  // 中間操作
+      .distinct()
+      .forEach(s -> System.out.println("After distinct: " + s));  // 終端操作
+```
 
 実行結果は
 
-    :::text
-    Before distinct: Dog
-    After distinct: Dog
-    Before distinct: Cat
-    After distinct: Cat
-    Before distinct: Dog
-    Before distinct: Monkey
-    After distinct: Monkey
-    Before distinct: Dog
+```text
+Before distinct: Dog
+After distinct: Dog
+Before distinct: Cat
+After distinct: Cat
+Before distinct: Dog
+Before distinct: Monkey
+After distinct: Monkey
+Before distinct: Dog
+```
 
 となります。Before と After が交互に出力されており、`distinct` の前の
 `peek` に渡したラムダの実行が最後の `forEach` の実行まで遅延されている
@@ -653,28 +682,30 @@ Stream の操作は大きく中間操作と終端操作に分けられます。S
 `Stream.forEach` や `IntStream.sum` などが該当します。終端操作が完了すると
 Stream は消費済みとみなされ、以降は使用できなくなります。
 
-    :::java
-    Stream<String> stream = Stream.of("hero", "dog", "monkey", "bird");
-    List<String> legend = stream.map(String::toUpperCase).collect(Collectors.toList());
-    System.out.println(legend);
+```java
+Stream<String> stream = Stream.of("hero", "dog", "monkey", "bird");
+List<String> legend = stream.map(String::toUpperCase).collect(Collectors.toList());
+System.out.println(legend);
 
-    // stream は終端操作である collect を通過しているので、
-    // 再度使おうとすると IllegalStateException が発生する
-    List<String> legend2 = stream.map(String::toLowerCase).collect(Collectors.toList());
-    System.out.println(legend2);
+// stream は終端操作である collect を通過しているので、
+// 再度使おうとすると IllegalStateException が発生する
+List<String> legend2 = stream.map(String::toLowerCase).collect(Collectors.toList());
+System.out.println(legend2);
+```
 
 実行結果:
 
-    :::text
-    [HERO, DOG, MONKEY, BIRD]
-    Exception in thread "main" java.lang.IllegalStateException: stream has already been operated upon or closed
-            at java.util.stream.AbstractPipeline.<init>(AbstractPipeline.java:203)
-            at java.util.stream.ReferencePipeline.<init>(ReferencePipeline.java:94)
-            at java.util.stream.ReferencePipeline$StatelessOp.<init>(ReferencePipeline.java:618)
-            at java.util.stream.ReferencePipeline$3.<init>(ReferencePipeline.java:187)
-            at java.util.stream.ReferencePipeline.map(ReferencePipeline.java:186)
-            at Tutor4.useTwice(Tutor4.java:219)
-            at Tutor4.main(Tutor4.java:234)
+```text
+[HERO, DOG, MONKEY, BIRD]
+Exception in thread "main" java.lang.IllegalStateException: stream has already been operated upon or closed
+        at java.util.stream.AbstractPipeline.<init>(AbstractPipeline.java:203)
+        at java.util.stream.ReferencePipeline.<init>(ReferencePipeline.java:94)
+        at java.util.stream.ReferencePipeline$StatelessOp.<init>(ReferencePipeline.java:618)
+        at java.util.stream.ReferencePipeline$3.<init>(ReferencePipeline.java:187)
+        at java.util.stream.ReferencePipeline.map(ReferencePipeline.java:186)
+        at Tutor4.useTwice(Tutor4.java:219)
+        at Tutor4.main(Tutor4.java:234)
+```
 
 `toUpperCase` でマップして得た `List` は出力されていますが、その後
 `toLowerCase` でマップしようとしたところで例外が発生しています。
@@ -696,43 +727,46 @@ Stream API では独自の中間操作、終端操作を実装するための手
 例として「2 つの Stream から取り出した要素を関数に適用しつつ 1 つの
 Stream にまとめる」という中間操作を考えてみます。
 
-    :::java
-    public static <T, U, R> Stream<R> zipWith(Stream<T> stream1, Stream<U> stream2,
-                                              BiFunction<? super T, ? super U, ? extends R> fn) {
-        Iterator<T> i1 = stream1.iterator();
-        Iterator<U> i2 = stream2.iterator();
-        Iterator<R> iter = new Iterator<R>() {
-            @Override
-            public boolean hasNext() {
-                return i1.hasNext() && i2.hasNext();
-            }
+```java
+public static <T, U, R> Stream<R> zipWith(Stream<T> stream1, Stream<U> stream2,
+                                          BiFunction<? super T, ? super U, ? extends R> fn) {
+    Iterator<T> i1 = stream1.iterator();
+    Iterator<U> i2 = stream2.iterator();
+    Iterator<R> iter = new Iterator<R>() {
+        @Override
+        public boolean hasNext() {
+            return i1.hasNext() && i2.hasNext();
+        }
 
-            @Override
-            public R next() {
-                return fn.apply(i1.next(), i2.next());
-            }
-        };
+        @Override
+        public R next() {
+            return fn.apply(i1.next(), i2.next());
+        }
+    };
 
-        Spliterator<Integer> spliter = Spliterators.spliteratorUnknownSize(
-                iter, Spliterator.NONNULL | Spliterator.ORDERED)
-        return StreamSupport.stream(spliter, false);
-    }
+    Spliterator<Integer> spliter = Spliterators.spliteratorUnknownSize(
+            iter, Spliterator.NONNULL | Spliterator.ORDERED)
+    return StreamSupport.stream(spliter, false);
+}
+```
 
 こんな感じで使います:
 
-    :::java
-    Stream<Integer> ns1 = Stream.of(1, 2, 3, 4, 5);
-    Stream<Integer> ns2 = Stream.of(5, 4, 3, 2, 1);
-    zipWith(ns1, ns2, Math::max).forEach(System.out::println);
+```java
+Stream<Integer> ns1 = Stream.of(1, 2, 3, 4, 5);
+Stream<Integer> ns2 = Stream.of(5, 4, 3, 2, 1);
+zipWith(ns1, ns2, Math::max).forEach(System.out::println);
+```
 
 実行結果:
 
-    :::text
-    5
-    4
-    3
-    4
-    5
+```text
+5
+4
+3
+4
+5
+```
 
 `zipWith` で Stream のインスタンスを得るまでの流れを追うと:
 
@@ -763,50 +797,51 @@ Stream にまとめる」という中間操作を考えてみます。
 
 さっそくですが、ラムダ式のコンパイル結果を見てます。
 
-    :::text
-    $ cat UseLambda.java
-    import java.util.function.*;
+```text
+$ cat UseLambda.java
+import java.util.function.*;
 
-    public class UseLambda {
-        public static void main(String[] args) {
-            callItWith1(x -> x + 1);
-        }
-
-        private static int callItWith1(IntUnaryOperator op) {
-            return op.applyAsInt(1);
-        }
+public class UseLambda {
+    public static void main(String[] args) {
+        callItWith1(x -> x + 1);
     }
 
-    $ javap -c -p UseLambda
-    Compiled from "UseLambda.java"
-    public class UseLambda {
-      public UseLambda();
-        Code:
-           0: aload_0
-           1: invokespecial #1                  // Method java/lang/Object."<init>":()V
-           4: return
-
-      public static void main(java.lang.String[]);
-        Code:
-           0: invokedynamic #2,  0              // InvokeDynamic #0:applyAsInt:()Ljava/util/function/IntUnaryOperator;
-           5: invokestatic  #3                  // Method callItWith1:(Ljava/util/function/IntUnaryOperator;)I
-           8: pop
-           9: return
-
-      private static int callItWith1(java.util.function.IntUnaryOperator);
-        Code:
-           0: aload_0
-           1: iconst_1
-           2: invokeinterface #4,  2            // InterfaceMethod java/util/function/IntUnaryOperator.applyAsInt:(I)I
-           7: ireturn
-
-      private static int lambda$main$0(int);
-        Code:
-           0: iload_0
-           1: iconst_1
-           2: iadd
-           3: ireturn
+    private static int callItWith1(IntUnaryOperator op) {
+        return op.applyAsInt(1);
     }
+}
+
+$ javap -c -p UseLambda
+Compiled from "UseLambda.java"
+public class UseLambda {
+  public UseLambda();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: invokedynamic #2,  0              // InvokeDynamic #0:applyAsInt:()Ljava/util/function/IntUnaryOperator;
+       5: invokestatic  #3                  // Method callItWith1:(Ljava/util/function/IntUnaryOperator;)I
+       8: pop
+       9: return
+
+  private static int callItWith1(java.util.function.IntUnaryOperator);
+    Code:
+       0: aload_0
+       1: iconst_1
+       2: invokeinterface #4,  2            // InterfaceMethod java/util/function/IntUnaryOperator.applyAsInt:(I)I
+       7: ireturn
+
+  private static int lambda$main$0(int);
+    Code:
+       0: iload_0
+       1: iconst_1
+       2: iadd
+       3: ireturn
+}
+```
 
 ラムダ式は `invokedynamic` という命令にコンパイルされます。
 
@@ -864,121 +899,122 @@ bootstrap メソッドとは、`invokedynamic` に関連付けられる `CallSit
 
 UseLambda に -v オプションをつけて javap してみます:
 
-    :::text
-    $ javap -v -c -p UseLambda
-    Classfile /home/kazuki/sources/writing/java-lambda/sandbox/UseLambda.class
-      Last modified 2014/10/13; size 1018 bytes
-      MD5 checksum 0ec5849decc1a5fda4ed01164d157016
-      Compiled from "UseLambda.java"
-    public class UseLambda
-      minor version: 0
-      major version: 52
-      flags: ACC_PUBLIC, ACC_SUPER
-    Constant pool:
-       #1 = Methodref          #6.#19         // java/lang/Object."<init>":()V
-       #2 = InvokeDynamic      #0:#24         // #0:applyAsInt:()Ljava/util/function/IntUnaryOperator;
-       #3 = Methodref          #5.#25         // UseLambda.callItWith1:(Ljava/util/function/IntUnaryOperator;)I
-       #4 = InterfaceMethodref #26.#27        // java/util/function/IntUnaryOperator.applyAsInt:(I)I
-       #5 = Class              #28            // UseLambda
-       #6 = Class              #29            // java/lang/Object
-       #7 = Utf8               <init>
-       #8 = Utf8               ()V
-       #9 = Utf8               Code
-      #10 = Utf8               LineNumberTable
-      #11 = Utf8               main
-      #12 = Utf8               ([Ljava/lang/String;)V
-      #13 = Utf8               callItWith1
-      #14 = Utf8               (Ljava/util/function/IntUnaryOperator;)I
-      #15 = Utf8               lambda$main$0
-      #16 = Utf8               (I)I
-      #17 = Utf8               SourceFile
-      #18 = Utf8               UseLambda.java
-      #19 = NameAndType        #7:#8          // "<init>":()V
-      #20 = Utf8               BootstrapMethods
-      #21 = MethodHandle       #6:#30         // invokestatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
-      #22 = MethodType         #16            //  (I)I
-      #23 = MethodHandle       #6:#31         // invokestatic UseLambda.lambda$main$0:(I)I
-      #24 = NameAndType        #32:#33        // applyAsInt:()Ljava/util/function/IntUnaryOperator;
-      #25 = NameAndType        #13:#14        // callItWith1:(Ljava/util/function/IntUnaryOperator;)I
-      #26 = Class              #34            // java/util/function/IntUnaryOperator
-      #27 = NameAndType        #32:#16        // applyAsInt:(I)I
-      #28 = Utf8               UseLambda
-      #29 = Utf8               java/lang/Object
-      #30 = Methodref          #35.#36        // java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
-      #31 = Methodref          #5.#37         // UseLambda.lambda$main$0:(I)I
-      #32 = Utf8               applyAsInt
-      #33 = Utf8               ()Ljava/util/function/IntUnaryOperator;
-      #34 = Utf8               java/util/function/IntUnaryOperator
-      #35 = Class              #38            // java/lang/invoke/LambdaMetafactory
-      #36 = NameAndType        #39:#43        // metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
-      #37 = NameAndType        #15:#16        // lambda$main$0:(I)I
-      #38 = Utf8               java/lang/invoke/LambdaMetafactory
-      #39 = Utf8               metafactory
-      #40 = Class              #45            // java/lang/invoke/MethodHandles$Lookup
-      #41 = Utf8               Lookup
-      #42 = Utf8               InnerClasses
-      #43 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
-      #44 = Class              #46            // java/lang/invoke/MethodHandles
-      #45 = Utf8               java/lang/invoke/MethodHandles$Lookup
-      #46 = Utf8               java/lang/invoke/MethodHandles
-    {
-      public UseLambda();
-        descriptor: ()V
-        flags: ACC_PUBLIC
-        Code:
-          stack=1, locals=1, args_size=1
-             0: aload_0
-             1: invokespecial #1                  // Method java/lang/Object."<init>":()V
-             4: return
-          LineNumberTable:
-            line 3: 0
+```text
+$ javap -v -c -p UseLambda
+Classfile /home/kazuki/sources/writing/java-lambda/sandbox/UseLambda.class
+  Last modified 2014/10/13; size 1018 bytes
+  MD5 checksum 0ec5849decc1a5fda4ed01164d157016
+  Compiled from "UseLambda.java"
+public class UseLambda
+  minor version: 0
+  major version: 52
+  flags: ACC_PUBLIC, ACC_SUPER
+Constant pool:
+   #1 = Methodref          #6.#19         // java/lang/Object."<init>":()V
+   #2 = InvokeDynamic      #0:#24         // #0:applyAsInt:()Ljava/util/function/IntUnaryOperator;
+   #3 = Methodref          #5.#25         // UseLambda.callItWith1:(Ljava/util/function/IntUnaryOperator;)I
+   #4 = InterfaceMethodref #26.#27        // java/util/function/IntUnaryOperator.applyAsInt:(I)I
+   #5 = Class              #28            // UseLambda
+   #6 = Class              #29            // java/lang/Object
+   #7 = Utf8               <init>
+   #8 = Utf8               ()V
+   #9 = Utf8               Code
+  #10 = Utf8               LineNumberTable
+  #11 = Utf8               main
+  #12 = Utf8               ([Ljava/lang/String;)V
+  #13 = Utf8               callItWith1
+  #14 = Utf8               (Ljava/util/function/IntUnaryOperator;)I
+  #15 = Utf8               lambda$main$0
+  #16 = Utf8               (I)I
+  #17 = Utf8               SourceFile
+  #18 = Utf8               UseLambda.java
+  #19 = NameAndType        #7:#8          // "<init>":()V
+  #20 = Utf8               BootstrapMethods
+  #21 = MethodHandle       #6:#30         // invokestatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #22 = MethodType         #16            //  (I)I
+  #23 = MethodHandle       #6:#31         // invokestatic UseLambda.lambda$main$0:(I)I
+  #24 = NameAndType        #32:#33        // applyAsInt:()Ljava/util/function/IntUnaryOperator;
+  #25 = NameAndType        #13:#14        // callItWith1:(Ljava/util/function/IntUnaryOperator;)I
+  #26 = Class              #34            // java/util/function/IntUnaryOperator
+  #27 = NameAndType        #32:#16        // applyAsInt:(I)I
+  #28 = Utf8               UseLambda
+  #29 = Utf8               java/lang/Object
+  #30 = Methodref          #35.#36        // java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #31 = Methodref          #5.#37         // UseLambda.lambda$main$0:(I)I
+  #32 = Utf8               applyAsInt
+  #33 = Utf8               ()Ljava/util/function/IntUnaryOperator;
+  #34 = Utf8               java/util/function/IntUnaryOperator
+  #35 = Class              #38            // java/lang/invoke/LambdaMetafactory
+  #36 = NameAndType        #39:#43        // metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #37 = NameAndType        #15:#16        // lambda$main$0:(I)I
+  #38 = Utf8               java/lang/invoke/LambdaMetafactory
+  #39 = Utf8               metafactory
+  #40 = Class              #45            // java/lang/invoke/MethodHandles$Lookup
+  #41 = Utf8               Lookup
+  #42 = Utf8               InnerClasses
+  #43 = Utf8               (Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+  #44 = Class              #46            // java/lang/invoke/MethodHandles
+  #45 = Utf8               java/lang/invoke/MethodHandles$Lookup
+  #46 = Utf8               java/lang/invoke/MethodHandles
+{
+  public UseLambda();
+    descriptor: ()V
+    flags: ACC_PUBLIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: aload_0
+         1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+         4: return
+      LineNumberTable:
+        line 3: 0
 
-      public static void main(java.lang.String[]);
-        descriptor: ([Ljava/lang/String;)V
-        flags: ACC_PUBLIC, ACC_STATIC
-        Code:
-          stack=1, locals=1, args_size=1
-             0: invokedynamic #2,  0              // InvokeDynamic #0:applyAsInt:()Ljava/util/function/IntUnaryOperator;
-             5: invokestatic  #3                  // Method callItWith1:(Ljava/util/function/IntUnaryOperator;)I
-             8: pop
-             9: return
-          LineNumberTable:
-            line 5: 0
-            line 6: 9
+  public static void main(java.lang.String[]);
+    descriptor: ([Ljava/lang/String;)V
+    flags: ACC_PUBLIC, ACC_STATIC
+    Code:
+      stack=1, locals=1, args_size=1
+         0: invokedynamic #2,  0              // InvokeDynamic #0:applyAsInt:()Ljava/util/function/IntUnaryOperator;
+         5: invokestatic  #3                  // Method callItWith1:(Ljava/util/function/IntUnaryOperator;)I
+         8: pop
+         9: return
+      LineNumberTable:
+        line 5: 0
+        line 6: 9
 
-      private static int callItWith1(java.util.function.IntUnaryOperator);
-        descriptor: (Ljava/util/function/IntUnaryOperator;)I
-        flags: ACC_PRIVATE, ACC_STATIC
-        Code:
-          stack=2, locals=1, args_size=1
-             0: aload_0
-             1: iconst_1
-             2: invokeinterface #4,  2            // InterfaceMethod java/util/function/IntUnaryOperator.applyAsInt:(I)I
-             7: ireturn
-          LineNumberTable:
-            line 9: 0
+  private static int callItWith1(java.util.function.IntUnaryOperator);
+    descriptor: (Ljava/util/function/IntUnaryOperator;)I
+    flags: ACC_PRIVATE, ACC_STATIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: aload_0
+         1: iconst_1
+         2: invokeinterface #4,  2            // InterfaceMethod java/util/function/IntUnaryOperator.applyAsInt:(I)I
+         7: ireturn
+      LineNumberTable:
+        line 9: 0
 
-      private static int lambda$main$0(int);
-        descriptor: (I)I
-        flags: ACC_PRIVATE, ACC_STATIC, ACC_SYNTHETIC
-        Code:
-          stack=2, locals=1, args_size=1
-             0: iload_0
-             1: iconst_1
-             2: iadd
-             3: ireturn
-          LineNumberTable:
-            line 5: 0
-    }
-    SourceFile: "UseLambda.java"
-    InnerClasses:
-         public static final #41= #40 of #44; //Lookup=class java/lang/invoke/MethodHandles$Lookup of class java/lang/invoke/MethodHandles
-    BootstrapMethods:
-      0: #21 invokestatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
-        Method arguments:
-          #22 (I)I
-          #23 invokestatic UseLambda.lambda$main$0:(I)I
-          #22 (I)I
+  private static int lambda$main$0(int);
+    descriptor: (I)I
+    flags: ACC_PRIVATE, ACC_STATIC, ACC_SYNTHETIC
+    Code:
+      stack=2, locals=1, args_size=1
+         0: iload_0
+         1: iconst_1
+         2: iadd
+         3: ireturn
+      LineNumberTable:
+        line 5: 0
+}
+SourceFile: "UseLambda.java"
+InnerClasses:
+     public static final #41= #40 of #44; //Lookup=class java/lang/invoke/MethodHandles$Lookup of class java/lang/invoke/MethodHandles
+BootstrapMethods:
+  0: #21 invokestatic java/lang/invoke/LambdaMetafactory.metafactory:(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;
+    Method arguments:
+      #22 (I)I
+      #23 invokestatic UseLambda.lambda$main$0:(I)I
+      #22 (I)I
+```
 
 がんばって追ってみれば、ラムダ式の `invokedynamic` 命令に
 `LambdaMetafactory` の `metafactory` メソッドに対する `invokestatic` が関連付
@@ -999,28 +1035,29 @@ UseLambda に -v オプションをつけて javap してみます:
 
 少し追いかけてみます:
 
-    :::java
-    public class LambdaMetafactory {
-        ...
+```java
+public class LambdaMetafactory {
+    ...
 
-        public static CallSite metafactory(MethodHandles.Lookup caller,
-                                           String invokedName,
-                                           MethodType invokedType,
-                                           MethodType samMethodType,
-                                           MethodHandle implMethod,
-                                           MethodType instantiatedMethodType)
-                throws LambdaConversionException {
-            AbstractValidatingLambdaMetafactory mf;
-            mf = new InnerClassLambdaMetafactory(caller, invokedType,
-                                                 invokedName, samMethodType,
-                                                 implMethod, instantiatedMethodType,
-                                                 false, EMPTY_CLASS_ARRAY, EMPTY_MT_ARRAY);
-            mf.validateMetafactoryArgs();
-            return mf.buildCallSite();
-        }
-
-        ...
+    public static CallSite metafactory(MethodHandles.Lookup caller,
+                                       String invokedName,
+                                       MethodType invokedType,
+                                       MethodType samMethodType,
+                                       MethodHandle implMethod,
+                                       MethodType instantiatedMethodType)
+            throws LambdaConversionException {
+        AbstractValidatingLambdaMetafactory mf;
+        mf = new InnerClassLambdaMetafactory(caller, invokedType,
+                                             invokedName, samMethodType,
+                                             implMethod, instantiatedMethodType,
+                                             false, EMPTY_CLASS_ARRAY, EMPTY_MT_ARRAY);
+        mf.validateMetafactoryArgs();
+        return mf.buildCallSite();
     }
+
+    ...
+}
+```
 
 `InnerClassLambdaMetafactory` の `buildCallSite` メソッドの戻り値を返してい
 ます。
@@ -1032,56 +1069,57 @@ UseLambda に -v オプションをつけて javap してみます:
 
 `InnerClassLambdaMetafactory` クラスの `buildCallSite` メソッドを追ってみます。
 
-    :::java
-    /* package */ final class InnerClassLambdaMetafactory extends AbstractValidatingLambdaMetafactory {
-        ...
-        private static final String NAME_FACTORY = "get$Lambda";
-        ...
+```java
+/* package */ final class InnerClassLambdaMetafactory extends AbstractValidatingLambdaMetafactory {
+    ...
+    private static final String NAME_FACTORY = "get$Lambda";
+    ...
 
-        @Override
-        CallSite buildCallSite() throws LambdaConversionException {
-            final Class<?> innerClass = spinInnerClass();
-            if (invokedType.parameterCount() == 0) {
-                final Constructor[] ctrs = AccessController.doPrivileged(
-                        new PrivilegedAction<Constructor[]>() {
-                    @Override
-                    public Constructor[] run() {
-                        Constructor<?>[] ctrs = innerClass.getDeclaredConstructors();
-                        if (ctrs.length == 1) {
-                            // The lambda implementing inner class constructor is private, set
-                            // it accessible (by us) before creating the constant sole instance
-                            ctrs[0].setAccessible(true);
-                        }
-                        return ctrs;
+    @Override
+    CallSite buildCallSite() throws LambdaConversionException {
+        final Class<?> innerClass = spinInnerClass();
+        if (invokedType.parameterCount() == 0) {
+            final Constructor[] ctrs = AccessController.doPrivileged(
+                    new PrivilegedAction<Constructor[]>() {
+                @Override
+                public Constructor[] run() {
+                    Constructor<?>[] ctrs = innerClass.getDeclaredConstructors();
+                    if (ctrs.length == 1) {
+                        // The lambda implementing inner class constructor is private, set
+                        // it accessible (by us) before creating the constant sole instance
+                        ctrs[0].setAccessible(true);
                     }
-                        });
-                if (ctrs.length != 1) {
-                    throw new LambdaConversionException("Expected one lambda constructor for "
-                            + innerClass.getCanonicalName() + ", got " + ctrs.length);
+                    return ctrs;
                 }
+                    });
+            if (ctrs.length != 1) {
+                throw new LambdaConversionException("Expected one lambda constructor for "
+                        + innerClass.getCanonicalName() + ", got " + ctrs.length);
+            }
 
-                try {
-                    Object inst = ctrs[0].newInstance();
-                    return new ConstantCallSite(MethodHandles.constant(samBase, inst));
-                }
-                catch (ReflectiveOperationException e) {
-                    throw new LambdaConversionException("Exception instantiating lambda object", e);
-                }
-            } else {
-                try {
-                    UNSAFE.ensureClassInitialized(innerClass);
-                    return new ConstantCallSite(
-                            MethodHandles.Lookup.IMPL_LOOKUP
-                                 .findStatic(innerClass, NAME_FACTORY, invokedType));
-                }
-                catch (ReflectiveOperationException e) {
-                    throw new LambdaConversionException("Exception finding constructor", e);
-                }
+            try {
+                Object inst = ctrs[0].newInstance();
+                return new ConstantCallSite(MethodHandles.constant(samBase, inst));
+            }
+            catch (ReflectiveOperationException e) {
+                throw new LambdaConversionException("Exception instantiating lambda object", e);
+            }
+        } else {
+            try {
+                UNSAFE.ensureClassInitialized(innerClass);
+                return new ConstantCallSite(
+                        MethodHandles.Lookup.IMPL_LOOKUP
+                             .findStatic(innerClass, NAME_FACTORY, invokedType));
+            }
+            catch (ReflectiveOperationException e) {
+                throw new LambdaConversionException("Exception finding constructor", e);
             }
         }
-
-        ...
     }
+
+    ...
+}
+```
 
 `spinInnerClass` メソッドの呼び出しにより、プロキシクラスを呼び出し元の内
 部クラスとして生成しています。
@@ -1091,12 +1129,13 @@ UseLambda に -v オプションをつけて javap してみます:
 `invokedType` によって表現されるメソッドの引数は、ラムダ式がキャプチャす
 る変数、すなわちラムダ式の内部からアクセスされる外側の変数です。
 
-    :::java
-    void method() {
-        callWithIt1(x -> x + 1);  // (1)
-        int y = 1;
-        callWithIt1(x -> x + y);  // (2)
-    }
+```java
+void method() {
+    callWithIt1(x -> x + 1);  // (1)
+    int y = 1;
+    callWithIt1(x -> x + y);  // (2)
+}
+```
 
 (1) のラムダ式は、式の引数だけを用いた式であり、キャプチャする変数はあ
 りません。(2) のラムダ式は、式の外部で定義された変数 y を用いており、y
@@ -1107,9 +1146,10 @@ UseLambda に -v オプションをつけて javap してみます:
 
 まず、キャプチャする変数がない場合に生成している `CallSite` を見てみます:
 
-    :::java
-    Object inst = ctrs[0].newInstance();
-    return new ConstantCallSite(MethodHandles.constant(samBase, inst));
+```java
+Object inst = ctrs[0].newInstance();
+return new ConstantCallSite(MethodHandles.constant(samBase, inst));
+```
 
 ここで生成している `CallSite` が持つメソッドハンドルは、
 `MethodHandles.constant` が返すメソッドハンドルです。
@@ -1120,13 +1160,14 @@ UseLambda に -v オプションをつけて javap してみます:
 
 次にキャプチャする変数がある場合に生成している CallSite を見てみます:
 
-    :::java
-    private static final String NAME_FACTORY = "get$Lambda";
-    ...
+```java
+private static final String NAME_FACTORY = "get$Lambda";
+...
 
-    return new ConstantCallSite(
-            MethodHandles.Lookup.IMPL_LOOKUP
-                 .findStatic(innerClass, NAME_FACTORY, invokedType));
+return new ConstantCallSite(
+        MethodHandles.Lookup.IMPL_LOOKUP
+             .findStatic(innerClass, NAME_FACTORY, invokedType));
+```
 
 ここで生成している `CallSite` が持つメソッドハンドルは、`innerClass` のクラ
 スメソッドである `get$Lambda` への参照です。そのシグネチャは `invokedType`
@@ -1166,71 +1207,72 @@ UseLambda に -v オプションをつけて javap してみます:
 クラスですが、実際どのようなプロキシクラスが生成されているのか、デバッ
 グ用のオプションを使うことで確認することができます。
 
-    :::text
-    $ cat UseLambda.java
-    import java.util.function.*;
+```text
+$ cat UseLambda.java
+import java.util.function.*;
 
-    public class UseLambda {
-        public static void main(String[] args) {
-            callItWith1(x -> x + 1);
-            int y = 1;
-            callItWith1(x -> x + y);
-        }
-
-        private static int callItWith1(IntUnaryOperator op) {
-            return op.applyAsInt(1);
-        }
+public class UseLambda {
+    public static void main(String[] args) {
+        callItWith1(x -> x + 1);
+        int y = 1;
+        callItWith1(x -> x + y);
     }
 
-    $ java -Djdk.internal.lambda.dumpProxyClasses=lambdaproxy UseLambda
-    $ ls lambdaproxy
-    UseLambda$$Lambda$1.class  UseLambda$$Lambda$2.class
-
-    $ cd lambdaproxy
-    $ javap -c -p UseLambda\$\$Lambda\$1
-    final class UseLambda$$Lambda$1 implements java.util.function.IntUnaryOperator {
-      private UseLambda$$Lambda$1();
-        Code:
-           0: aload_0
-           1: invokespecial #10                 // Method java/lang/Object."<init>":()V
-           4: return
-
-      public int applyAsInt(int);
-        Code:
-           0: iload_1
-           1: invokestatic  #17                 // Method UseLambda.lambda$main$0:(I)I
-           4: ireturn
+    private static int callItWith1(IntUnaryOperator op) {
+        return op.applyAsInt(1);
     }
+}
 
-    $ javap -c -p UseLambda\$\$Lambda\$2
-    final class UseLambda$$Lambda$2 implements java.util.function.IntUnaryOperator {
-      private final int arg$1;
+$ java -Djdk.internal.lambda.dumpProxyClasses=lambdaproxy UseLambda
+$ ls lambdaproxy
+UseLambda$$Lambda$1.class  UseLambda$$Lambda$2.class
 
-      private UseLambda$$Lambda$2(int);
-        Code:
-           0: aload_0
-           1: invokespecial #13                 // Method java/lang/Object."<init>":()V
-           4: aload_0
-           5: iload_1
-           6: putfield      #15                 // Field arg$1:I
-           9: return
+$ cd lambdaproxy
+$ javap -c -p UseLambda\$\$Lambda\$1
+final class UseLambda$$Lambda$1 implements java.util.function.IntUnaryOperator {
+  private UseLambda$$Lambda$1();
+    Code:
+       0: aload_0
+       1: invokespecial #10                 // Method java/lang/Object."<init>":()V
+       4: return
 
-      private static java.util.function.IntUnaryOperator get$Lambda(int);
-        Code:
-           0: new           #2                  // class UseLambda$$Lambda$2
-           3: dup
-           4: iload_0
-           5: invokespecial #19                 // Method "<init>":(I)V
-           8: areturn
+  public int applyAsInt(int);
+    Code:
+       0: iload_1
+       1: invokestatic  #17                 // Method UseLambda.lambda$main$0:(I)I
+       4: ireturn
+}
 
-      public int applyAsInt(int);
-        Code:
-           0: aload_0
-           1: getfield      #15                 // Field arg$1:I
-           4: iload_1
-           5: invokestatic  #27                 // Method UseLambda.lambda$main$1:(II)I
-           8: ireturn
-    }
+$ javap -c -p UseLambda\$\$Lambda\$2
+final class UseLambda$$Lambda$2 implements java.util.function.IntUnaryOperator {
+  private final int arg$1;
+
+  private UseLambda$$Lambda$2(int);
+    Code:
+       0: aload_0
+       1: invokespecial #13                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iload_1
+       6: putfield      #15                 // Field arg$1:I
+       9: return
+
+  private static java.util.function.IntUnaryOperator get$Lambda(int);
+    Code:
+       0: new           #2                  // class UseLambda$$Lambda$2
+       3: dup
+       4: iload_0
+       5: invokespecial #19                 // Method "<init>":(I)V
+       8: areturn
+
+  public int applyAsInt(int);
+    Code:
+       0: aload_0
+       1: getfield      #15                 // Field arg$1:I
+       4: iload_1
+       5: invokestatic  #27                 // Method UseLambda.lambda$main$1:(II)I
+       8: ireturn
+}
+```
 
 システムプロパティ `jdk.internal.lambda.dumpProxyClasses` にフォルダ名を
 指定して実行すると、実行時に生成するプロキシクラスをフォルダ内にダンプ
